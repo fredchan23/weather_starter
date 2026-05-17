@@ -2,6 +2,8 @@
 
 Use this as a changelog. Add one entry per branch or commit, and keep the same order inside every entry.
 
+Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
+
 ## 2026-05-17 | branch `main` | commit `cd53906` | delete location
 
 - status: implemented
@@ -33,4 +35,3 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 - risks: What could regress?
 - verification: What was run to validate the change?
 - follow-up: What remains open?
-
