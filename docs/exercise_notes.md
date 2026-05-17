@@ -4,7 +4,7 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
-## 2026-05-17 | branch `main` | commit `pending` | two-hour forecast-first dashboard
+## 2026-05-17 | branch `main` | commit `74e0e5c` | two-hour forecast-first dashboard
 
 - status: implemented
 - implementation request: Complete the condition card flow using the existing `two-hr-forecast` backend integration, make the dashboard display forecast data correctly even when realtime sensor readings are absent, and stabilize local dev startup after the Vite HMR websocket port conflict.
