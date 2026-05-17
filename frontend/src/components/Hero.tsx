@@ -4,6 +4,7 @@ import { HourlyStrip } from './HourlyStrip';
 import { TenDayForecast } from './TenDayForecast';
 import { TileGrid } from './Tiles';
 import { formatTemperature, formatTime } from './format';
+import type { ForecastPeriod } from '../types';
 
 export function Hero() {
   const { locations, refresh, refreshingId } = useStore();
@@ -35,6 +36,30 @@ export function Hero() {
   const temperature = formatTemperature(selected.weather?.temperature_c);
   const high = formatTemperature(selected.weather?.forecast_high_c);
   const low = formatTemperature(selected.weather?.forecast_low_c);
+  const hasTemperature = selected.weather?.temperature_c !== null;
+  const hasHighLow =
+    selected.weather?.forecast_high_c !== null || selected.weather?.forecast_low_c !== null;
+  const hasCurrentConditions =
+    selected.weather?.temperature_c !== null ||
+    selected.weather?.humidity_percent !== null ||
+    selected.weather?.rainfall_mm !== null;
+  const fallbackPeriods: ForecastPeriod[] =
+    selected.weather?.forecast_periods?.length > 0
+      ? selected.weather.forecast_periods
+      : validPeriod && condition
+        ? [{ label: validPeriod, forecast: condition }]
+        : [];
+  const hasDailyForecast = selected.weather?.daily_forecast?.length > 0;
+  const hasSupplementaryTiles =
+    selected.weather?.psi_twenty_four_hourly !== null ||
+    selected.weather?.pm25_one_hourly !== null ||
+    selected.weather?.wind_speed_knots !== null ||
+    selected.weather?.wind_direction_degrees !== null ||
+    selected.weather?.uv_index !== null ||
+    selected.weather?.temperature_c !== null ||
+    selected.weather?.rainfall_mm !== null ||
+    selected.weather?.humidity_percent !== null ||
+    selected.weather?.forecast_high_c !== null;
 
   return (
     <main className="flex-1 overflow-y-auto">
@@ -47,13 +72,26 @@ export function Hero() {
             </div>
           )}
           <h1 className="text-4xl font-light leading-tight text-white">{area}</h1>
-          <div className="mt-2 text-[6.5rem] font-extralight leading-none tracking-tight text-white">
-            {temperature}
-          </div>
-          <div className="mt-1 text-lg text-white/90">{condition}</div>
-          <div className="mt-1 text-sm text-white/70 tabular-nums">
-            H:{high} L:{low}
-          </div>
+          {hasTemperature ? (
+            <>
+              <div className="mt-2 text-[6.5rem] font-extralight leading-none tracking-tight text-white">
+                {temperature}
+              </div>
+              <div className="mt-1 text-lg text-white/90">{condition}</div>
+              {hasHighLow && (
+                <div className="mt-1 text-sm text-white/70 tabular-nums">
+                  H:{high} L:{low}
+                </div>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="mt-4 rounded-full border border-white/15 bg-white/[0.08] px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
+                Two-hour forecast
+              </div>
+              <div className="mt-4 text-5xl font-light leading-tight text-white">{condition}</div>
+            </>
+          )}
           {observed && <div className="mt-3 text-xs text-white/55">Updated {observed}</div>}
         </header>
 
@@ -61,9 +99,28 @@ export function Hero() {
           <p className="px-2 pb-1 text-center text-xs text-white/65">{validPeriod}</p>
         )}
 
-        <HourlyStrip periods={selected.weather?.forecast_periods} />
-        <TenDayForecast weather={selected.weather} />
-        <TileGrid weather={selected.weather} />
+        {hasCurrentConditions && (
+          <section className="rounded-2xl border border-white/15 bg-white/[0.08] p-3 backdrop-blur-xl">
+            <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+              Current Conditions
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <ConditionStat label="Temperature" value={temperature} />
+              <ConditionStat
+                label="Humidity"
+                value={formatPercent(selected.weather?.humidity_percent)}
+              />
+              <ConditionStat
+                label="Rainfall"
+                value={formatMillimeters(selected.weather?.rainfall_mm)}
+              />
+            </div>
+          </section>
+        )}
+
+        <HourlyStrip periods={fallbackPeriods} />
+        {hasDailyForecast && <TenDayForecast weather={selected.weather} />}
+        {hasSupplementaryTiles && <TileGrid weather={selected.weather} />}
 
         <footer className="mt-2 flex flex-col items-center gap-3 pb-8 text-xs text-white/55">
           <button
@@ -83,4 +140,28 @@ export function Hero() {
       </div>
     </main>
   );
+}
+
+interface ConditionStatProps {
+  label: string;
+  value: string;
+}
+
+function ConditionStat({ label, value }: ConditionStatProps) {
+  return (
+    <div className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-center backdrop-blur-sm">
+      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
+        {label}
+      </div>
+      <div className="mt-1 text-lg font-medium tabular-nums text-white/95">{value}</div>
+    </div>
+  );
+}
+
+function formatPercent(value: number | null | undefined): string {
+  return typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value)}%` : '--%';
+}
+
+function formatMillimeters(value: number | null | undefined): string {
+  return typeof value === 'number' && Number.isFinite(value) ? `${value.toFixed(1)} mm` : '-- mm';
 }

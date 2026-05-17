@@ -19,6 +19,14 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
   const temperature = formatTemperature(location.weather.temperature_c);
   const high = formatTemperature(location.weather.forecast_high_c);
   const low = formatTemperature(location.weather.forecast_low_c);
+  const humidity = formatNumber(location.weather.humidity_percent);
+  const rainfall = formatNumber(location.weather.rainfall_mm, 1);
+  const temperatureDisplay = temperature === '--°' ? temperature : `${temperature}C`;
+  const hasTemperature = location.weather.temperature_c !== null;
+  const hasHighLow =
+    location.weather.forecast_high_c !== null || location.weather.forecast_low_c !== null;
+  const hasCurrentConditionReadings =
+    location.weather.humidity_percent !== null || location.weather.rainfall_mm !== null;
 
   const onSelect = () => select(location.id);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -71,17 +79,42 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
             )}
           </div>
         </div>
-        <div className="text-3xl font-light tabular-nums text-white/90">{temperature}</div>
+        <div className="flex flex-col items-end leading-none text-right">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
+            {hasTemperature ? 'Temperature' : 'Source'}
+          </span>
+          <span className="text-3xl font-medium tabular-nums text-white/95">
+            {hasTemperature ? temperatureDisplay : '2-hr'}
+          </span>
+        </div>
       </div>
       <div className="mt-3 flex items-center justify-between border-t border-white/10 px-4 py-2 text-xs">
         <div className="flex items-center gap-2 text-white/80">
           <CloudIcon className="h-4 w-4 text-white/70" />
           <span>{condition}</span>
         </div>
-        <div className="text-white/60 tabular-nums">
-          H:{high} L:{low}
-        </div>
+        {hasHighLow && (
+          <div className="text-white/60 tabular-nums">
+            H:{high} L:{low}
+          </div>
+        )}
       </div>
+      {hasCurrentConditionReadings && (
+        <div className="grid grid-cols-2 gap-2 border-t border-white/10 px-4 py-2 text-[11px] text-white/70">
+          <div className="flex items-center justify-between rounded-full bg-white/[0.05] px-3 py-1.5">
+            <span>Humidity</span>
+            <span className="tabular-nums text-white/90">{humidity}%</span>
+          </div>
+          <div className="flex items-center justify-between rounded-full bg-white/[0.05] px-3 py-1.5">
+            <span>Rain</span>
+            <span className="tabular-nums text-white/90">{rainfall} mm</span>
+          </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function formatNumber(value: number | null | undefined, digits = 0): string {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '--';
 }

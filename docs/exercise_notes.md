@@ -4,6 +4,22 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-17 | branch `main` | commit `pending` | two-hour forecast-first dashboard
+
+- status: implemented
+- implementation request: Complete the condition card flow using the existing `two-hr-forecast` backend integration, make the dashboard display forecast data correctly even when realtime sensor readings are absent, and stabilize local dev startup after the Vite HMR websocket port conflict.
+- implementation challenges:
+  - The original UI assumed temperature was the primary hero value, but the `two-hr-forecast` endpoint does not provide temperature. That produced a technically correct but misleading `--°` state.
+  - The backend saved `condition` and `valid_period_text`, but the forecast strip rendered from `forecast_periods`, so the dashboard still showed "unavailable" even when two-hour forecast data existed.
+  - Older saved snapshots in SQLite would not immediately have the new `forecast_periods` shape, so the frontend needed a safe fallback derived from existing fields.
+  - The dev server used Vite middleware mode without attaching HMR to the parent HTTP server, which caused a separate websocket bind on port `24678` and local startup failures.
+  - The broader dashboard includes many secondary tiles that remain empty until other data sources are integrated, so the UI had to hide or downplay unavailable sections instead of making the page look broken.
+- scope: `backend/src/server.ts`, `backend/src/weather.ts`, `backend/src/weather.test.ts`, `frontend/src/components/Hero.tsx`, `frontend/src/components/HourlyStrip.tsx`, `frontend/src/components/SidebarCard.tsx`.
+- decisions: Populate `forecast_periods` from the two-hour payload, keep current-condition sensor reads as optional enrichment, switch the hero and sidebar to a forecast-first presentation when temperature is unavailable, and attach Vite middleware HMR to the shared Node HTTP server.
+- risks: Existing stored rows may still need a manual refresh to hydrate newly added snapshot fields. The UI now conditionally hides empty sections, so later data-source additions need to preserve these fallback paths.
+- verification: `npm test`, `npm run build`.
+- follow-up: If the app should show temperature, humidity, rainfall, UV, wind, or air quality by default, the backend still needs to compose and persist those sources consistently for every refresh path.
+
 ## 2026-05-17 | branch `main` | commit `cd53906` | delete location
 
 - status: implemented

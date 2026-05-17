@@ -182,9 +182,44 @@ export class SingaporeWeatherClient {
 
   async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherSnapshot> {
     const forecastPayload = await this.fetchLatestForecastPayload().catch(() => null);
-    return forecastPayload
-      ? this.snapshotFromPayload(forecastPayload, latitude, longitude)
-      : this.emptyForecastSnapshot();
+    if (!forecastPayload) {
+      return this.emptyForecastSnapshot();
+    }
+
+    const [
+      snapshot,
+      temperature,
+      humidity,
+      rainfall,
+    ] = await Promise.all([
+      Promise.resolve(this.snapshotFromPayload(forecastPayload, latitude, longitude)),
+      this.fetchNearestReading('air-temperature', latitude, longitude).catch(() => ({
+        value: null,
+        timestamp: null,
+      })),
+      this.fetchNearestReading('relative-humidity', latitude, longitude).catch(() => ({
+        value: null,
+        timestamp: null,
+      })),
+      this.fetchNearestReading('rainfall', latitude, longitude).catch(() => ({
+        value: null,
+        timestamp: null,
+      })),
+    ]);
+
+    return {
+      ...snapshot,
+      observed_at:
+        latestTimestamp([
+          snapshot.observed_at,
+          temperature.timestamp,
+          humidity.timestamp,
+          rainfall.timestamp,
+        ]) ?? snapshot.observed_at,
+      temperature_c: temperature.value,
+      humidity_percent: humidity.value,
+      rainfall_mm: rainfall.value,
+    };
   }
 
   async fetchLatestForecastPayload(): Promise<ForecastPayload> {
@@ -404,8 +439,9 @@ export class SingaporeWeatherClient {
 
     const nearestArea = nearestAreaName(areaMetadata, latitude, longitude);
     if (nearestArea && forecastByArea.has(nearestArea)) {
+      const condition = forecastByArea.get(nearestArea) as string;
       return {
-        condition: forecastByArea.get(nearestArea) as string,
+        condition,
         observed_at: latestItem.update_timestamp ?? latestItem.timestamp ?? '',
         source: 'api-open.data.gov.sg',
         area: nearestArea,
@@ -421,14 +457,20 @@ export class SingaporeWeatherClient {
         psi_twenty_four_hourly: null,
         pm25_one_hourly: null,
         air_quality_region: null,
-        forecast_periods: [],
+        forecast_periods: [
+          {
+            label: latestItem.valid_period?.text ?? 'Next 2 hours',
+            forecast: condition,
+          },
+        ],
         daily_forecast: [],
       };
     }
 
     const fallback = forecasts[0];
+    const condition = fallback.forecast ?? 'Unknown';
     return {
-      condition: fallback.forecast ?? 'Unknown',
+      condition,
       observed_at: latestItem.update_timestamp ?? latestItem.timestamp ?? '',
       source: 'api-open.data.gov.sg',
       area: fallback.area ?? null,
@@ -444,7 +486,12 @@ export class SingaporeWeatherClient {
       psi_twenty_four_hourly: null,
       pm25_one_hourly: null,
       air_quality_region: null,
-      forecast_periods: [],
+      forecast_periods: [
+        {
+          label: latestItem.valid_period?.text ?? 'Next 2 hours',
+          forecast: condition,
+        },
+      ],
       daily_forecast: [],
     };
   }

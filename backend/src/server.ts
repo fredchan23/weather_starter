@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import pinoHttpModule from 'pino-http';
+import { createServer as createHttpServer } from 'node:http';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createLocationsRouter, type WeatherClient } from './routes/locations.js';
@@ -18,6 +19,7 @@ interface AppOptions {
 
 export async function createApp(options: AppOptions = {}) {
   const app = express();
+  const server = createHttpServer(app);
   const serveFrontend = options.serveFrontend ?? process.env.NODE_ENV !== 'test';
   const enableRequestLogging = options.enableRequestLogging ?? process.env.NODE_ENV !== 'test';
 
@@ -70,7 +72,7 @@ export async function createApp(options: AppOptions = {}) {
       const { createServer } = await import('vite');
       const vite = await createServer({
         root: resolve(__dirname, '..', '..', 'frontend'),
-        server: { middlewareMode: true },
+        server: { middlewareMode: { server } },
         appType: 'spa',
       });
       app.use(vite.middlewares);
@@ -89,14 +91,14 @@ export async function createApp(options: AppOptions = {}) {
     },
   );
 
-  return app;
+  return { app, server };
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PORT ?? 3000);
-  const app = await createApp();
+  const { server } = await createApp();
 
-  app.listen(port, '127.0.0.1', () => {
+  server.listen(port, '127.0.0.1', () => {
     logger.info({ url: `http://127.0.0.1:${port}` }, 'Weather Starter listening');
   });
 }
