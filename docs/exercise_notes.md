@@ -4,6 +4,20 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-18 | branch `main` | commit `a54863e` | preserve dashboard values across partial refreshes
+
+- status: implemented
+- implementation request: Stop the dashboard from losing previously shown weather values on successive refreshes when the upstream provider returns only a partial snapshot for a location.
+- implementation challenges:
+  - The refresh route replaced the entire stored weather snapshot, so any temporarily missing upstream reading immediately blanked out cards that had valid values from the previous refresh.
+  - The fix needed to preserve older values only for fields omitted by the latest refresh, without blocking legitimate new readings or breaking the backend snapshot contract.
+  - The merge helper initially used the runtime weather snapshot type for both inputs, but the stored database snapshot is nullable in a few places, which caused a backend TypeScript build error that had to be resolved before the change could ship.
+- scope: `backend/src/routes/locations.ts`, `backend/src/routes/locations.test.ts`.
+- decisions: Merge refresh results with the persisted snapshot before saving, keep prior readings and forecast arrays when the latest refresh omits them, and add a route-level regression test that simulates a partial follow-up refresh.
+- risks: Holding on to the last good reading can mask a genuinely unavailable upstream metric for one refresh cycle, so any future UX that needs to distinguish "stale" from "missing" will need explicit metadata instead of relying on nulls alone.
+- verification: `npm test -- backend/src/routes/locations.test.ts`, `npm run build`.
+- follow-up: If the product should surface freshness per tile, extend the snapshot model to track per-reading timestamps or stale-state flags instead of only merged values.
+
 ## 2026-05-17 | branch `main` | commit `aba619a` | air quality feature completion
 
 - status: implemented
