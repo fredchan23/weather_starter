@@ -123,6 +123,64 @@ describe('SingaporeWeatherClient', () => {
         });
       }
 
+      if (url.endsWith('/v2/real-time/api/wind-speed')) {
+        return jsonResponse({
+          data: {
+            stations: [
+              {
+                id: 'bishan-wind-speed',
+                location: {
+                  latitude: 1.35,
+                  longitude: 103.83,
+                },
+              },
+            ],
+            readings: [
+              {
+                timestamp: '2026-05-17T01:02:00Z',
+                data: [{ stationId: 'bishan-wind-speed', value: 6.5 }],
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v2/real-time/api/wind-direction')) {
+        return jsonResponse({
+          data: {
+            stations: [
+              {
+                id: 'bishan-wind-direction',
+                location: {
+                  latitude: 1.35,
+                  longitude: 103.83,
+                },
+              },
+            ],
+            readings: [
+              {
+                timestamp: '2026-05-17T01:01:00Z',
+                data: [{ stationId: 'bishan-wind-direction', value: 220 }],
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v2/real-time/api/uv')) {
+        return jsonResponse({
+          data: {
+            records: [
+              {
+                timestamp: '2026-05-17T01:00:00Z',
+                updatedTimestamp: '2026-05-17T01:06:00Z',
+                index: [{ hour: '2026-05-17T01:00:00Z', value: 7 }],
+              },
+            ],
+          },
+        });
+      }
+
       throw new Error(`Unexpected fetch URL: ${url}`);
     });
 
@@ -136,13 +194,16 @@ describe('SingaporeWeatherClient', () => {
 
     expect(weather).toMatchObject({
       condition: 'Partly Cloudy',
-      observed_at: '2026-05-17T01:05:00Z',
+      observed_at: '2026-05-17T01:06:00Z',
       source: 'api-open.data.gov.sg',
       area: 'Bishan',
       valid_period_text: 'This morning',
       temperature_c: 30.1,
       humidity_percent: 84,
       rainfall_mm: 0.4,
+      wind_speed_knots: 6.5,
+      wind_direction_degrees: 220,
+      uv_index: 7,
     });
     expect(weather.forecast_periods).toEqual([
       {
@@ -150,12 +211,15 @@ describe('SingaporeWeatherClient', () => {
         forecast: 'Partly Cloudy',
       },
     ]);
-    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(fetchMock).toHaveBeenCalledTimes(7);
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       'https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast',
       'https://api-open.data.gov.sg/v2/real-time/api/air-temperature',
       'https://api-open.data.gov.sg/v2/real-time/api/relative-humidity',
       'https://api-open.data.gov.sg/v2/real-time/api/rainfall',
+      'https://api-open.data.gov.sg/v2/real-time/api/wind-speed',
+      'https://api-open.data.gov.sg/v2/real-time/api/wind-direction',
+      'https://api-open.data.gov.sg/v2/real-time/api/uv',
     ]);
   });
 
@@ -238,6 +302,64 @@ describe('SingaporeWeatherClient', () => {
         return jsonResponse({ errorMsg: 'rainfall unavailable' }, 500);
       }
 
+      if (url.endsWith('/v2/real-time/api/wind-speed')) {
+        return jsonResponse({
+          data: {
+            stations: [
+              {
+                id: 'bishan-wind-speed',
+                location: {
+                  latitude: 1.35,
+                  longitude: 103.83,
+                },
+              },
+            ],
+            readings: [
+              {
+                timestamp: '2026-05-17T01:02:00Z',
+                data: [{ stationId: 'bishan-wind-speed', value: 6.5 }],
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v2/real-time/api/wind-direction')) {
+        return jsonResponse({
+          data: {
+            stations: [
+              {
+                id: 'bishan-wind-direction',
+                location: {
+                  latitude: 1.35,
+                  longitude: 103.83,
+                },
+              },
+            ],
+            readings: [
+              {
+                timestamp: '2026-05-17T01:01:00Z',
+                data: [{ stationId: 'bishan-wind-direction', value: 220 }],
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v2/real-time/api/uv')) {
+        return jsonResponse({
+          data: {
+            records: [
+              {
+                timestamp: '2026-05-17T01:00:00Z',
+                updatedTimestamp: '2026-05-17T01:06:00Z',
+                index: [{ hour: '2026-05-17T01:00:00Z', value: 7 }],
+              },
+            ],
+          },
+        });
+      }
+
       throw new Error(`Unexpected fetch URL: ${url}`);
     });
 
@@ -246,10 +368,13 @@ describe('SingaporeWeatherClient', () => {
 
     expect(weather).toMatchObject({
       condition: 'Partly Cloudy',
-      observed_at: '2026-05-17T01:05:00Z',
+      observed_at: '2026-05-17T01:06:00Z',
       temperature_c: 30.1,
       humidity_percent: 84,
       rainfall_mm: null,
+      wind_speed_knots: 6.5,
+      wind_direction_degrees: 220,
+      uv_index: 7,
     });
     expect(weather.forecast_periods).toEqual([
       {
