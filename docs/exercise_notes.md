@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-17 | branch `main` | commit `c28c5ea` | weather metrics expansion
+
+- status: implemented
+- implementation request: Add weather metric support so the app can read and expose wind, UV, temperature, rainfall, and humidity data.
+- implementation challenges:
+  - The weather payload needed to be normalized into consistent metric readings so downstream code could consume the new fields without special cases.
+  - Test coverage had to be updated alongside the data model changes so the metric extraction behavior stayed predictable.
+- scope: `backend/src/weather.ts`, `backend/src/weather.test.ts`.
+- decisions: Extend the weather transformation layer to include the new metric readings and lock the expected shape in tests.
+- risks: Any UI or API consumer that still assumes the older weather shape may need a follow-up update to use the added metrics.
+- verification: `npm test`, `npm run build`.
+- follow-up: Wire the new metrics through any frontend views or API mappings that should display them.
+
 ## 2026-05-17 | branch `main` | commit `74e0e5c` | two-hour forecast-first dashboard
 
 - status: implemented
