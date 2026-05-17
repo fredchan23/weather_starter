@@ -16,7 +16,7 @@ export function HourlyStrip({ periods = [] }: HourlyStripProps) {
     return (
       <section className="rounded-2xl border border-white/15 bg-white/[0.08] backdrop-blur-xl">
         <p className="border-b border-white/10 px-4 py-2 text-[12px] text-white/85">
-          Two-hour forecast unavailable.
+          24-hour forecast unavailable.
         </p>
         <div className="flex min-h-[5rem] items-center justify-center text-sm text-white/55">
           --
@@ -34,7 +34,7 @@ export function HourlyStrip({ periods = [] }: HourlyStripProps) {
   return (
     <section className="rounded-2xl border border-white/15 bg-white/[0.08] backdrop-blur-xl">
       <p className="border-b border-white/10 px-4 py-2 text-[12px] text-white/85">
-        Two-hour area forecast.
+        24-hour area forecast.
       </p>
       <div
         className="grid divide-x divide-white/5"

@@ -4,6 +4,20 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-17 | branch `main` | commit `aba619a` | air quality feature completion
+
+- status: implemented
+- implementation request: Complete the air quality feature end to end by wiring the backend weather client to retrieve PSI and PM2.5 data from the realtime data.gov.sg APIs and expose those values through the existing weather snapshot flow.
+- implementation challenges:
+  - The weather client already had a dedicated air-quality helper, but `getCurrentWeather` was not including it in the composed snapshot, so the fetch path existed without reaching the UI or persistence layers.
+  - The latest timestamp logic needed to account for the air-quality response so the snapshot reflected the freshest available reading across all sources.
+  - Test coverage had to be updated to cover both the new requests and the merged PSI/PM2.5 output while keeping the existing two-hour forecast behavior intact.
+- scope: `backend/src/weather.ts`, `backend/src/weather.test.ts`.
+- decisions: Fold the air-quality fetch into the same `Promise.all` composition used for the other realtime readings, surface PSI/PM2.5/region on the returned `WeatherSnapshot`, and update the backend tests to lock the new behavior in.
+- risks: Any consumer that assumes `observed_at` comes only from the forecast or non-air-quality readings may see a later timestamp once PSI or PM2.5 updates arrive.
+- verification: `npm test -- --run backend/src/weather.test.ts`, `npx tsc -p backend/tsconfig.json --noEmit`.
+- follow-up: If any UI copy or dashboard summary should highlight the new air-quality values more prominently, update the frontend presentation separately.
+
 ## 2026-05-17 | branch `main` | commit `c28c5ea` | weather metrics expansion
 
 - status: implemented

@@ -101,6 +101,74 @@ describe('SingaporeWeatherClient', () => {
         });
       }
 
+      if (url.endsWith('/v2/real-time/api/twenty-four-hr-forecast')) {
+        return jsonResponse({
+          data: {
+            records: [
+              {
+                updatedTimestamp: '2026-05-17T01:09:00Z',
+                general: {
+                  temperature: {
+                    low: 25,
+                    high: 33,
+                  },
+                },
+                periods: [
+                  {
+                    timePeriod: {
+                      text: 'This morning',
+                    },
+                    regions: {
+                      central: {
+                        text: 'Sunny',
+                      },
+                    },
+                  },
+                  {
+                    timePeriod: {
+                      text: 'Afternoon',
+                    },
+                    regions: {
+                      central: {
+                        text: 'Mostly Cloudy',
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v1/environment/4-day-weather-forecast')) {
+        return jsonResponse({
+          items: [
+            {
+              update_timestamp: '2026-05-17T01:10:00Z',
+              forecasts: [
+                {
+                  date: '2026-05-17',
+                  forecast: 'Sunny',
+                  temperature: {
+                    low: 25,
+                    high: 33,
+                  },
+                },
+                {
+                  date: '2026-05-18',
+                  forecast: 'Cloudy',
+                  temperature: {
+                    low: 26,
+                    high: 32,
+                  },
+                },
+              ],
+            },
+          ],
+        });
+      }
+
       if (url.endsWith('/v2/real-time/api/rainfall')) {
         return jsonResponse({
           data: {
@@ -237,7 +305,7 @@ describe('SingaporeWeatherClient', () => {
 
     expect(weather).toMatchObject({
       condition: 'Partly Cloudy',
-      observed_at: '2026-05-17T01:08:00Z',
+      observed_at: '2026-05-17T01:10:00Z',
       source: 'api-open.data.gov.sg',
       area: 'Bishan',
       valid_period_text: 'This morning',
@@ -246,6 +314,8 @@ describe('SingaporeWeatherClient', () => {
       rainfall_mm: 0.4,
       wind_speed_knots: 6.5,
       wind_direction_degrees: 220,
+      forecast_low_c: 25,
+      forecast_high_c: 33,
       uv_index: 7,
       psi_twenty_four_hourly: 42,
       pm25_one_hourly: 9,
@@ -254,12 +324,32 @@ describe('SingaporeWeatherClient', () => {
     expect(weather.forecast_periods).toEqual([
       {
         label: 'This morning',
-        forecast: 'Partly Cloudy',
+        forecast: 'Sunny',
+      },
+      {
+        label: 'Afternoon',
+        forecast: 'Mostly Cloudy',
       },
     ]);
-    expect(fetchMock).toHaveBeenCalledTimes(9);
+    expect(weather.daily_forecast).toEqual([
+      {
+        date: '2026-05-17',
+        forecast: 'Sunny',
+        temperature_low_c: 25,
+        temperature_high_c: 33,
+      },
+      {
+        date: '2026-05-18',
+        forecast: 'Cloudy',
+        temperature_low_c: 26,
+        temperature_high_c: 32,
+      },
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(11);
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       'https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast',
+      'https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast',
+      'https://api.data.gov.sg/v1/environment/4-day-weather-forecast',
       'https://api-open.data.gov.sg/v2/real-time/api/air-temperature',
       'https://api-open.data.gov.sg/v2/real-time/api/relative-humidity',
       'https://api-open.data.gov.sg/v2/real-time/api/rainfall',
@@ -343,6 +433,56 @@ describe('SingaporeWeatherClient', () => {
               },
             ],
           },
+        });
+      }
+
+      if (url.endsWith('/v2/real-time/api/twenty-four-hr-forecast')) {
+        return jsonResponse({
+          data: {
+            records: [
+              {
+                updatedTimestamp: '2026-05-17T01:09:00Z',
+                general: {
+                  temperature: {
+                    low: 25,
+                    high: 33,
+                  },
+                },
+                periods: [
+                  {
+                    timePeriod: {
+                      text: 'This morning',
+                    },
+                    regions: {
+                      central: {
+                        text: 'Sunny',
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v1/environment/4-day-weather-forecast')) {
+        return jsonResponse({
+          items: [
+            {
+              update_timestamp: '2026-05-17T01:10:00Z',
+              forecasts: [
+                {
+                  date: '2026-05-17',
+                  forecast: 'Sunny',
+                  temperature: {
+                    low: 25,
+                    high: 33,
+                  },
+                },
+              ],
+            },
+          ],
         });
       }
 
@@ -459,12 +599,14 @@ describe('SingaporeWeatherClient', () => {
 
     expect(weather).toMatchObject({
       condition: 'Partly Cloudy',
-      observed_at: '2026-05-17T01:08:00Z',
+      observed_at: '2026-05-17T01:10:00Z',
       temperature_c: 30.1,
       humidity_percent: 84,
       rainfall_mm: null,
       wind_speed_knots: 6.5,
       wind_direction_degrees: 220,
+      forecast_low_c: 25,
+      forecast_high_c: 33,
       uv_index: 7,
       psi_twenty_four_hourly: 42,
       pm25_one_hourly: 9,
@@ -472,8 +614,8 @@ describe('SingaporeWeatherClient', () => {
     });
     expect(weather.forecast_periods).toEqual([
       {
-        label: 'Next 2 hours',
-        forecast: 'Partly Cloudy',
+        label: 'This morning',
+        forecast: 'Sunny',
       },
     ]);
   });

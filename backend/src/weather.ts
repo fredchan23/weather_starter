@@ -188,6 +188,8 @@ export class SingaporeWeatherClient {
 
     const [
       snapshot,
+      twentyFourHourForecast,
+      fourDayForecast,
       temperature,
       humidity,
       rainfall,
@@ -197,6 +199,16 @@ export class SingaporeWeatherClient {
       airQuality,
     ] = await Promise.all([
       Promise.resolve(this.snapshotFromPayload(forecastPayload, latitude, longitude)),
+      this.fetchTwentyFourHourForecast(latitude, longitude).catch(() => ({
+        low: null,
+        high: null,
+        periods: [],
+        timestamp: null,
+      })),
+      this.fetchFourDayForecast().catch(() => ({
+        days: [],
+        timestamp: null,
+      })),
       this.fetchNearestReading('air-temperature', latitude, longitude).catch(() => ({
         value: null,
         timestamp: null,
@@ -234,6 +246,8 @@ export class SingaporeWeatherClient {
       observed_at:
         latestTimestamp([
           snapshot.observed_at,
+          twentyFourHourForecast.timestamp,
+          fourDayForecast.timestamp,
           temperature.timestamp,
           humidity.timestamp,
           rainfall.timestamp,
@@ -242,6 +256,13 @@ export class SingaporeWeatherClient {
           uv.timestamp,
           airQuality.timestamp,
         ]) ?? snapshot.observed_at,
+      forecast_low_c: twentyFourHourForecast.low,
+      forecast_high_c: twentyFourHourForecast.high,
+      forecast_periods:
+        twentyFourHourForecast.periods.length > 0
+          ? twentyFourHourForecast.periods
+          : snapshot.forecast_periods,
+      daily_forecast: fourDayForecast.days,
       temperature_c: temperature.value,
       humidity_percent: humidity.value,
       rainfall_mm: rainfall.value,

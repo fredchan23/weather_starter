@@ -111,6 +111,7 @@ describe('locations API', () => {
   let tempDir: string;
   let router: Router;
   let resetStore: () => Promise<void> = async () => {};
+  let currentWeather: WeatherSnapshot = weather;
 
   beforeAll(async () => {
     tempDir = await mkdtemp(join(tmpdir(), 'weather-starter-test-'));
@@ -123,7 +124,7 @@ describe('locations API', () => {
     router = createLocationsRouter({
       weatherClient: {
         async getCurrentWeather() {
-          return weather;
+          return currentWeather;
         },
       },
     });
@@ -131,6 +132,7 @@ describe('locations API', () => {
 
   beforeEach(async () => {
     await resetStore();
+    currentWeather = weather;
   });
 
   afterAll(async () => {
@@ -180,6 +182,56 @@ describe('locations API', () => {
     });
 
     expect(getResponse.statusCode).toBe(404);
+  });
+
+  it('keeps the previous readings when refresh returns a partial snapshot', async () => {
+    const createResponse = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+    });
+    const created = createResponse.body as { id: number };
+
+    currentWeather = {
+      ...weather,
+      condition: 'Unavailable',
+      observed_at: '',
+      valid_period_text: null,
+      humidity_percent: null,
+      rainfall_mm: null,
+      uv_index: null,
+      psi_twenty_four_hourly: null,
+      pm25_one_hourly: null,
+      air_quality_region: null,
+      forecast_periods: [],
+      daily_forecast: [],
+    };
+
+    const refreshResponse = await callRoute(router, 'post', '/locations/:locationId/refresh', {
+      params: { locationId: String(created.id) },
+    });
+
+    expect(refreshResponse.statusCode).toBe(200);
+    expect(refreshResponse.body).toMatchObject({
+      id: created.id,
+      weather: {
+        condition: 'Cloudy',
+        observed_at: '2026-05-04T00:00:00Z',
+        humidity_percent: 80,
+        rainfall_mm: 0,
+        uv_index: 7,
+        psi_twenty_four_hourly: 42,
+        pm25_one_hourly: 9,
+        air_quality_region: 'central',
+        forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
+        daily_forecast: [
+          {
+            date: '2026-05-04',
+            forecast: 'Cloudy',
+            temperature_low_c: 25,
+            temperature_high_c: 32,
+          },
+        ],
+      },
+    });
   });
 
   it('returns 404 when deleting a missing location', async () => {

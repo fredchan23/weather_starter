@@ -39,10 +39,6 @@ export function Hero() {
   const hasTemperature = selected.weather?.temperature_c !== null;
   const hasHighLow =
     selected.weather?.forecast_high_c !== null || selected.weather?.forecast_low_c !== null;
-  const hasCurrentConditions =
-    selected.weather?.temperature_c !== null ||
-    selected.weather?.humidity_percent !== null ||
-    selected.weather?.rainfall_mm !== null;
   const fallbackPeriods: ForecastPeriod[] =
     selected.weather?.forecast_periods?.length > 0
       ? selected.weather.forecast_periods
@@ -99,25 +95,6 @@ export function Hero() {
           <p className="px-2 pb-1 text-center text-xs text-white/65">{validPeriod}</p>
         )}
 
-        {hasCurrentConditions && (
-          <section className="rounded-2xl border border-white/15 bg-white/[0.08] p-3 backdrop-blur-xl">
-            <div className="mb-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
-              Current Conditions
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              <ConditionStat label="Temperature" value={temperature} />
-              <ConditionStat
-                label="Humidity"
-                value={formatPercent(selected.weather?.humidity_percent)}
-              />
-              <ConditionStat
-                label="Rainfall"
-                value={formatMillimeters(selected.weather?.rainfall_mm)}
-              />
-            </div>
-          </section>
-        )}
-
         <HourlyStrip periods={fallbackPeriods} />
         {hasDailyForecast && <TenDayForecast weather={selected.weather} />}
         {hasSupplementaryTiles && <TileGrid weather={selected.weather} />}
@@ -156,12 +133,4 @@ function ConditionStat({ label, value }: ConditionStatProps) {
       <div className="mt-1 text-lg font-medium tabular-nums text-white/95">{value}</div>
     </div>
   );
-}
-
-function formatPercent(value: number | null | undefined): string {
-  return typeof value === 'number' && Number.isFinite(value) ? `${Math.round(value)}%` : '--%';
-}
-
-function formatMillimeters(value: number | null | undefined): string {
-  return typeof value === 'number' && Number.isFinite(value) ? `${value.toFixed(1)} mm` : '-- mm';
 }
