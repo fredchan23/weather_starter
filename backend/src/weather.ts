@@ -194,6 +194,7 @@ export class SingaporeWeatherClient {
       windSpeed,
       windDirection,
       uv,
+      airQuality,
     ] = await Promise.all([
       Promise.resolve(this.snapshotFromPayload(forecastPayload, latitude, longitude)),
       this.fetchNearestReading('air-temperature', latitude, longitude).catch(() => ({
@@ -220,6 +221,12 @@ export class SingaporeWeatherClient {
         value: null,
         timestamp: null,
       })),
+      this.fetchAirQuality(latitude, longitude).catch(() => ({
+        psi: null,
+        pm25: null,
+        region: null,
+        timestamp: null,
+      })),
     ]);
 
     return {
@@ -233,6 +240,7 @@ export class SingaporeWeatherClient {
           windSpeed.timestamp,
           windDirection.timestamp,
           uv.timestamp,
+          airQuality.timestamp,
         ]) ?? snapshot.observed_at,
       temperature_c: temperature.value,
       humidity_percent: humidity.value,
@@ -240,6 +248,9 @@ export class SingaporeWeatherClient {
       wind_speed_knots: windSpeed.value,
       wind_direction_degrees: windDirection.value,
       uv_index: uv.value,
+      psi_twenty_four_hourly: airQuality.psi,
+      pm25_one_hourly: airQuality.pm25,
+      air_quality_region: airQuality.region,
     };
   }
 

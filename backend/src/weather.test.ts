@@ -181,6 +181,49 @@ describe('SingaporeWeatherClient', () => {
         });
       }
 
+      if (url.endsWith('/v2/real-time/api/psi')) {
+        return jsonResponse({
+          data: {
+            regionMetadata: [
+              {
+                name: 'central',
+                labelLocation: {
+                  latitude: 1.35,
+                  longitude: 103.83,
+                },
+              },
+            ],
+            items: [
+              {
+                updatedTimestamp: '2026-05-17T01:07:00Z',
+                readings: {
+                  psi_twenty_four_hourly: {
+                    central: 42,
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v2/real-time/api/pm25')) {
+        return jsonResponse({
+          data: {
+            items: [
+              {
+                timestamp: '2026-05-17T01:08:00Z',
+                readings: {
+                  pm25_one_hourly: {
+                    central: 9,
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+
       throw new Error(`Unexpected fetch URL: ${url}`);
     });
 
@@ -194,7 +237,7 @@ describe('SingaporeWeatherClient', () => {
 
     expect(weather).toMatchObject({
       condition: 'Partly Cloudy',
-      observed_at: '2026-05-17T01:06:00Z',
+      observed_at: '2026-05-17T01:08:00Z',
       source: 'api-open.data.gov.sg',
       area: 'Bishan',
       valid_period_text: 'This morning',
@@ -204,6 +247,9 @@ describe('SingaporeWeatherClient', () => {
       wind_speed_knots: 6.5,
       wind_direction_degrees: 220,
       uv_index: 7,
+      psi_twenty_four_hourly: 42,
+      pm25_one_hourly: 9,
+      air_quality_region: 'central',
     });
     expect(weather.forecast_periods).toEqual([
       {
@@ -211,7 +257,7 @@ describe('SingaporeWeatherClient', () => {
         forecast: 'Partly Cloudy',
       },
     ]);
-    expect(fetchMock).toHaveBeenCalledTimes(7);
+    expect(fetchMock).toHaveBeenCalledTimes(9);
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       'https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast',
       'https://api-open.data.gov.sg/v2/real-time/api/air-temperature',
@@ -220,6 +266,8 @@ describe('SingaporeWeatherClient', () => {
       'https://api-open.data.gov.sg/v2/real-time/api/wind-speed',
       'https://api-open.data.gov.sg/v2/real-time/api/wind-direction',
       'https://api-open.data.gov.sg/v2/real-time/api/uv',
+      'https://api-open.data.gov.sg/v2/real-time/api/psi',
+      'https://api-open.data.gov.sg/v2/real-time/api/pm25',
     ]);
   });
 
@@ -360,6 +408,49 @@ describe('SingaporeWeatherClient', () => {
         });
       }
 
+      if (url.endsWith('/v2/real-time/api/psi')) {
+        return jsonResponse({
+          data: {
+            regionMetadata: [
+              {
+                name: 'central',
+                labelLocation: {
+                  latitude: 1.35,
+                  longitude: 103.83,
+                },
+              },
+            ],
+            items: [
+              {
+                updatedTimestamp: '2026-05-17T01:07:00Z',
+                readings: {
+                  psi_twenty_four_hourly: {
+                    central: 42,
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+
+      if (url.endsWith('/v2/real-time/api/pm25')) {
+        return jsonResponse({
+          data: {
+            items: [
+              {
+                timestamp: '2026-05-17T01:08:00Z',
+                readings: {
+                  pm25_one_hourly: {
+                    central: 9,
+                  },
+                },
+              },
+            ],
+          },
+        });
+      }
+
       throw new Error(`Unexpected fetch URL: ${url}`);
     });
 
@@ -368,13 +459,16 @@ describe('SingaporeWeatherClient', () => {
 
     expect(weather).toMatchObject({
       condition: 'Partly Cloudy',
-      observed_at: '2026-05-17T01:06:00Z',
+      observed_at: '2026-05-17T01:08:00Z',
       temperature_c: 30.1,
       humidity_percent: 84,
       rainfall_mm: null,
       wind_speed_knots: 6.5,
       wind_direction_degrees: 220,
       uv_index: 7,
+      psi_twenty_four_hourly: 42,
+      pm25_one_hourly: 9,
+      air_quality_region: 'central',
     });
     expect(weather.forecast_periods).toEqual([
       {
