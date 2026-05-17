@@ -68,6 +68,7 @@ npm run db:migrate  # Apply Drizzle migrations to backend/weather.db
 | `GET`  | `/api/locations`             | List all locations             |
 | `POST` | `/api/locations`             | Create a location              |
 | `GET`  | `/api/locations/:id`         | Get a single location          |
+| `DELETE` | `/api/locations/:id`     | Delete a location              |
 | `POST` | `/api/locations/:id/refresh` | Refresh weather for a location |
 
 Create a location:
@@ -160,12 +161,7 @@ These tasks are ordered from easiest to hardest. Each one builds on the existing
 
 ### 1. Delete a location
 
-Add a `DELETE /api/locations/:id` endpoint and a delete button to each card in `SidebarCard.tsx`.
-
-| Layer    | What to do                              |
-| -------- | --------------------------------------- |
-| Backend  | New DELETE endpoint for saved locations |
-| Frontend | Delete button in `SidebarCard.tsx`      |
+Implemented via `DELETE /api/locations/:id` and a top-right delete button in `SidebarCard.tsx`.
 
 ### 2. Geolocation + auto-detect
 

@@ -1,5 +1,5 @@
 import { useStore } from '../state/store';
-import { CloudIcon, HomeIcon } from './icons';
+import { CloseIcon, CloudIcon, HomeIcon } from './icons';
 import { formatTemperature, formatTime } from './format';
 import type { KeyboardEvent } from 'react';
 import type { Location } from '../types';
@@ -10,7 +10,7 @@ interface SidebarCardProps {
 }
 
 export function SidebarCard({ location, isHome }: SidebarCardProps) {
-  const { selectedId, select } = useStore();
+  const { selectedId, select, deleteLocation } = useStore();
   const isSelected = selectedId === location.id;
   const observed = formatTime(location.weather.observed_at);
   const area =
@@ -41,7 +41,19 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
           : 'border-white/10 bg-white/[0.07] hover:bg-white/[0.12]'
       }`}
     >
-      <div className="flex items-start justify-between gap-3 px-4 pt-3">
+      <button
+        type="button"
+        aria-label={`Delete location ${area}`}
+        title={`Delete location ${area}`}
+        onClick={(event) => {
+          event.stopPropagation();
+          void deleteLocation(location.id);
+        }}
+        className="absolute right-2 top-2 z-10 rounded-full bg-black/20 p-1.5 text-white/65 transition hover:bg-white/15 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+      >
+        <CloseIcon className="h-4 w-4" />
+      </button>
+      <div className="flex items-start justify-between gap-3 px-4 pt-3 pr-10">
         <div className="min-w-0">
           <div className="truncate text-lg font-semibold leading-tight text-white">{area}</div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/70">

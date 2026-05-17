@@ -94,6 +94,14 @@ export async function getLocation(id: number): Promise<LocationRecord | null> {
   return row ? rowToRecord(row) : null;
 }
 
+export async function deleteLocation(id: number): Promise<LocationRecord | null> {
+  const row = await db.select().from(locations).where(eq(locations.id, id)).get();
+  if (!row) return null;
+
+  await db.delete(locations).where(eq(locations.id, id)).run();
+  return rowToRecord(row);
+}
+
 export async function updateWeather(
   id: number,
   weather: WeatherSnapshot,

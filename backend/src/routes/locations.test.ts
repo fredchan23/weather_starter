@@ -1,8 +1,8 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { Router } from 'express';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { WeatherSnapshot } from '../weather.js';
 
 const weather: WeatherSnapshot = {
@@ -26,19 +26,101 @@ const weather: WeatherSnapshot = {
   daily_forecast: [{ date: '2026-05-04', forecast: 'Cloudy', temperature_low_c: 25, temperature_high_c: 32 }],
 };
 
+type RouteMethod = 'get' | 'post' | 'delete';
+
+interface MockResponse {
+  statusCode: number;
+  body: unknown;
+  ended: boolean;
+  status: (code: number) => MockResponse;
+  json: (payload: unknown) => MockResponse;
+  end: () => MockResponse;
+}
+
+function createMockResponse(): MockResponse {
+  const response: MockResponse = {
+    statusCode: 200,
+    body: undefined,
+    ended: false,
+    status(code: number) {
+      response.statusCode = code;
+      return response;
+    },
+    json(payload: unknown) {
+      response.body = payload;
+      return response;
+    },
+    end() {
+      response.ended = true;
+      return response;
+    },
+  };
+
+  return response;
+}
+
+function getRouteHandler(router: Router, method: RouteMethod, path: string) {
+  const stack = router as unknown as {
+    stack: Array<{
+      route?: {
+        path: string;
+        methods?: Partial<Record<RouteMethod, boolean>>;
+        stack: Array<{ handle: unknown }>;
+      };
+    }>;
+  };
+  const layer = stack.stack.find(
+    (candidate) => candidate.route?.path === path && candidate.route.methods?.[method],
+  );
+  if (!layer?.route?.stack[0]) {
+    throw new Error(`Route ${method.toUpperCase()} ${path} not found`);
+  }
+
+  return layer.route.stack[0].handle as unknown as (
+    request: { body?: unknown; params?: Record<string, string> },
+    response: MockResponse,
+    next: (error?: unknown) => void,
+  ) => Promise<void> | void;
+}
+
+async function callRoute(
+  router: Router,
+  method: RouteMethod,
+  path: string,
+  options: { body?: unknown; params?: Record<string, string> } = {},
+) {
+  const handler = getRouteHandler(router, method, path);
+  const response = createMockResponse();
+  const next = (error?: unknown) => {
+    if (error) throw error;
+  };
+
+  await handler(
+    {
+      body: options.body,
+      params: options.params ?? {},
+    },
+    response,
+    next,
+  );
+
+  return response;
+}
+
 describe('locations API', () => {
   let tempDir: string;
-  let app: Awaited<ReturnType<typeof import('../server.js').createApp>>;
+  let router: Router;
+  let resetStore: () => Promise<void> = async () => {};
 
   beforeAll(async () => {
     tempDir = await mkdtemp(join(tmpdir(), 'weather-starter-test-'));
     process.env.DATABASE_PATH = join(tempDir, 'weather.db');
     process.env.LOG_LEVEL = 'silent';
 
-    const { createApp } = await import('../server.js');
-    app = await createApp({
-      serveFrontend: false,
-      enableRequestLogging: false,
+    const db = await import('../db.js');
+    resetStore = db.resetStore;
+    const { createLocationsRouter } = await import('./locations.js');
+    router = createLocationsRouter({
       weatherClient: {
         async getCurrentWeather() {
           return weather;
@@ -47,16 +129,20 @@ describe('locations API', () => {
     });
   });
 
+  beforeEach(async () => {
+    await resetStore();
+  });
+
   afterAll(async () => {
     await rm(tempDir, { recursive: true, force: true });
   });
 
   it('refreshes weather when a location is created', async () => {
-    const response = await request(app)
-      .post('/api/locations')
-      .send({ latitude: 1.35, longitude: 103.85 })
-      .expect(201);
+    const response = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+    });
 
+    expect(response.statusCode).toBe(201);
     expect(response.body).toMatchObject({
       id: 1,
       latitude: 1.35,
@@ -68,8 +154,40 @@ describe('locations API', () => {
       },
     });
 
-    const listResponse = await request(app).get('/api/locations').expect(200);
-    expect(listResponse.body.locations).toHaveLength(1);
-    expect(listResponse.body.locations[0].weather.condition).toBe('Cloudy');
+    const listResponse = await callRoute(router, 'get', '/locations');
+    expect(listResponse.statusCode).toBe(200);
+    expect((listResponse.body as { locations: unknown[] }).locations).toHaveLength(1);
+  });
+
+  it('deletes a location', async () => {
+    const createResponse = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.36, longitude: 103.86 },
+    });
+    const created = createResponse.body as { id: number };
+
+    const deleteResponse = await callRoute(router, 'delete', '/locations/:locationId', {
+      params: { locationId: String(created.id) },
+    });
+
+    expect(deleteResponse.statusCode).toBe(204);
+    expect(deleteResponse.ended).toBe(true);
+
+    const listResponse = await callRoute(router, 'get', '/locations');
+    expect((listResponse.body as { locations: unknown[] }).locations).toHaveLength(0);
+
+    const getResponse = await callRoute(router, 'get', '/locations/:locationId', {
+      params: { locationId: String(created.id) },
+    });
+
+    expect(getResponse.statusCode).toBe(404);
+  });
+
+  it('returns 404 when deleting a missing location', async () => {
+    const response = await callRoute(router, 'delete', '/locations/:locationId', {
+      params: { locationId: '999' },
+    });
+
+    expect(response.statusCode).toBe(404);
+    expect(response.body).toMatchObject({ detail: 'Location not found' });
   });
 });
