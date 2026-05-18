@@ -3,6 +3,7 @@ import { LocationIcon, RefreshIcon } from './icons';
 import { HourlyStrip } from './HourlyStrip';
 import { TenDayForecast } from './TenDayForecast';
 import { TileGrid } from './Tiles';
+import { MapCard } from './MapCard';
 import { formatTemperature, formatTime } from './format';
 import type { ForecastPeriod } from '../types';
 
@@ -13,12 +14,15 @@ export function Hero() {
   if (!selected) {
     return (
       <main className="flex flex-1 flex-col p-10">
-        <div className="flex flex-1 items-center justify-center">
+        <div className="flex flex-1 flex-col items-center justify-center gap-6">
           <div className="text-center">
             <p className="text-2xl font-light text-white/85">Select a location</p>
             <p className="mt-2 text-sm text-white/60">
               Add a Singapore coordinate from the sidebar to see its weather.
             </p>
+          </div>
+          <div className="w-full max-w-5xl">
+            <MapCard />
           </div>
         </div>
       </main>
@@ -98,6 +102,7 @@ export function Hero() {
         <HourlyStrip periods={fallbackPeriods} />
         {hasDailyForecast && <TenDayForecast weather={selected.weather} />}
         {hasSupplementaryTiles && <TileGrid weather={selected.weather} />}
+        <MapCard />
 
         <footer className="mt-2 flex flex-col items-center gap-3 pb-8 text-xs text-white/55">
           <button

@@ -8,7 +8,13 @@ import {
   updateWeather,
 } from '../db.js';
 import type { WeatherSnapshot as StoredWeatherSnapshot } from '../schema.js';
-import { SingaporeWeatherClient, WeatherProviderError, type WeatherSnapshot } from '../weather.js';
+import {
+  CONDITION_UNAVAILABLE,
+  SingaporeWeatherClient,
+  WeatherProviderError,
+  type WeatherSnapshot,
+} from '../weather.js';
+import { CONDITION_NOT_REFRESHED } from '../db.js';
 import { logger } from '../logger.js';
 
 export interface WeatherClient {
@@ -128,7 +134,7 @@ export function createLocationsRouter(options: LocationsRouterOptions = {}): Rou
 
 function mergeWeatherSnapshot(previous: StoredWeatherSnapshot, next: WeatherSnapshot): WeatherSnapshot {
   const shouldKeepPreviousForecast =
-    next.condition === 'Unavailable' && previous.condition !== 'Not refreshed';
+    next.condition === CONDITION_UNAVAILABLE && previous.condition !== CONDITION_NOT_REFRESHED;
 
   return {
     condition:

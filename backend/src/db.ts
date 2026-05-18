@@ -6,6 +6,8 @@ import { drizzle } from 'drizzle-orm/sqlite-proxy';
 import { migrate } from 'drizzle-orm/sqlite-proxy/migrator';
 import { locations, type WeatherSnapshot } from './schema.js';
 
+export const CONDITION_NOT_REFRESHED = 'Not refreshed';
+
 export interface LocationRecord {
   id: number;
   latitude: number;
@@ -17,7 +19,7 @@ export interface LocationRecord {
 type LocationRow = typeof locations.$inferSelect;
 
 const defaultWeather: WeatherSnapshot = {
-  condition: 'Not refreshed',
+  condition: CONDITION_NOT_REFRESHED,
   observed_at: null,
   source: 'not-refreshed',
   area: null,

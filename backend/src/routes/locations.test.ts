@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import type { Router } from 'express';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import type { WeatherSnapshot } from '../weather.js';
+import { CONDITION_UNAVAILABLE, type WeatherSnapshot } from '../weather.js';
 
 const weather: WeatherSnapshot = {
   condition: 'Cloudy',
@@ -192,7 +192,7 @@ describe('locations API', () => {
 
     currentWeather = {
       ...weather,
-      condition: 'Unavailable',
+      condition: CONDITION_UNAVAILABLE,
       observed_at: '',
       valid_period_text: null,
       humidity_percent: null,
@@ -241,5 +241,39 @@ describe('locations API', () => {
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toMatchObject({ detail: 'Location not found' });
+  });
+
+  it('rejects coordinates outside Singapore with 422', async () => {
+    const outOfBounds = [
+      { latitude: 0, longitude: 103.85 },
+      { latitude: 1.35, longitude: 0 },
+      { latitude: 10, longitude: 110 },
+    ];
+
+    for (const coords of outOfBounds) {
+      const response = await callRoute(router, 'post', '/locations', { body: coords });
+      expect(response.statusCode).toBe(422);
+      expect(response.body).toMatchObject({ detail: expect.stringContaining('Singapore') });
+    }
+  });
+
+  it('rejects missing latitude or longitude with 422', async () => {
+    const response = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 'not-a-number', longitude: 103.85 },
+    });
+    expect(response.statusCode).toBe(422);
+  });
+
+  it('rejects a duplicate location with 409', async () => {
+    await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+    });
+
+    const response = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+    });
+
+    expect(response.statusCode).toBe(409);
+    expect(response.body).toMatchObject({ detail: expect.stringContaining('already exists') });
   });
 });

@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-18 | branch `main` | commit `pending` | add Apple Weather-style MapCard
+
+- status: implemented
+- implementation request: Add a `MapCard` component using `react-leaflet` that renders a dark-themed Leaflet map inside a glassmorphism tile, shows all saved locations as custom pill-shaped pins, supports fullscreen expand/shrink, and integrates into the Hero for both the selected and no-selection states.
+- implementation challenges:
+  - Leaflet requires its CSS to be imported before the app CSS, otherwise tiles render as overlapping squares. The import was added to `main.tsx` ahead of `index.css`.
+  - Two simultaneous `MapContainer` instances cause duplicate resource allocation, so the card's `MapInner` is replaced with a placeholder `<div>` while the fullscreen modal is open.
+  - Leaflet's default `iconAnchor` must be zeroed out for `DivIcon` to avoid the pin bubble sitting underground.
+- scope: `frontend/src/components/MapCard.tsx` (new), `frontend/src/components/icons.tsx`, `frontend/src/components/Hero.tsx`, `frontend/src/main.tsx`, `frontend/package.json`.
+- decisions: CartoDB DarkMatter tile layer (free, no key, matches dark theme). Card zoom 11, fullscreen zoom 12. Pin click calls `select(loc.id)`. Condition truncated at 16 chars. Temperature omitted from pill when value is `"--°"`.
+- verification: `npm test` — 9/9 pass. `npm run build` — compiles cleanly.
+- follow-up: Could add a "fit bounds" action so the map always frames all pins. Zoom controls are intentionally hidden but scroll-zoom still works.
+
 ## 2026-05-18 | branch `main` | commit `a54863e` | preserve dashboard values across partial refreshes
 
 - status: implemented

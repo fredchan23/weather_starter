@@ -1,5 +1,7 @@
 export class WeatherProviderError extends Error {}
 
+export const CONDITION_UNAVAILABLE = 'Unavailable';
+
 interface ForecastPayload {
   code?: number;
   errorMsg?: string;
@@ -426,7 +428,7 @@ export class SingaporeWeatherClient {
   }
 
   private legacyApiBaseUrl(): string {
-    return 'https://api.data.gov.sg';
+    return this.options.baseUrl ?? 'https://api.data.gov.sg';
   }
 
   private async fetchJson<T>(url: string): Promise<T> {
@@ -551,7 +553,7 @@ export class SingaporeWeatherClient {
 
   private emptyForecastSnapshot(): WeatherSnapshot {
     return {
-      condition: 'Unavailable',
+      condition: CONDITION_UNAVAILABLE,
       observed_at: '',
       source: 'api-open.data.gov.sg',
       area: null,

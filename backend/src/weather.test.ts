@@ -349,7 +349,7 @@ describe('SingaporeWeatherClient', () => {
     expect(fetchMock.mock.calls.map(([url]) => String(url))).toEqual([
       'https://api-open.data.gov.sg/v2/real-time/api/two-hr-forecast',
       'https://api-open.data.gov.sg/v2/real-time/api/twenty-four-hr-forecast',
-      'https://api.data.gov.sg/v1/environment/4-day-weather-forecast',
+      'https://api-open.data.gov.sg/v1/environment/4-day-weather-forecast',
       'https://api-open.data.gov.sg/v2/real-time/api/air-temperature',
       'https://api-open.data.gov.sg/v2/real-time/api/relative-humidity',
       'https://api-open.data.gov.sg/v2/real-time/api/rainfall',
