@@ -48,7 +48,7 @@ function MapInner({ locations, selectedId, select, zoom }: MapInnerProps) {
     return (
         <>
             <TileLayer
-                url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                 attribution='&copy; <a href="https://carto.com/">CARTO</a>'
             />
             {locations.map((loc) => {
@@ -110,10 +110,12 @@ export function MapCard() {
                             <MapInner locations={locations} selectedId={selectedId} select={select} zoom={11} />
                         </MapContainer>
                     )}
-                    {/* Overlay header strip */}
-                    <div className="absolute top-0 left-0 right-0 z-[1000] backdrop-blur-sm bg-black/25">
-                        {headerBar(false)}
-                    </div>
+                    {/* Overlay header strip — hidden when fullscreen modal is open */}
+                    {!isExpanded && (
+                        <div className="absolute top-0 left-0 right-0 z-[1000] backdrop-blur-sm bg-black/25">
+                            {headerBar(false)}
+                        </div>
+                    )}
                 </div>
             </div>
 

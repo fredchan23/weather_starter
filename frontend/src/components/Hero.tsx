@@ -100,9 +100,9 @@ export function Hero() {
         )}
 
         <HourlyStrip periods={fallbackPeriods} />
+        <MapCard />
         {hasDailyForecast && <TenDayForecast weather={selected.weather} />}
         {hasSupplementaryTiles && <TileGrid weather={selected.weather} />}
-        <MapCard />
 
         <footer className="mt-2 flex flex-col items-center gap-3 pb-8 text-xs text-white/55">
           <button
