@@ -1,3 +1,4 @@
+// Hidden Code: Fox
 import type { CreateLocationPayload, Location } from './types';
 
 const API_BASE = '/api';
