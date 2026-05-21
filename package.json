@@ -6,6 +6,7 @@
   "scripts": {
     "prepare": "husky",
     "dev": "node scripts/dev.mjs",
+    "format": "prettier --write .",
     "build": "npm run build -w frontend && tsc -p backend/tsconfig.json",
     "start": "node scripts/start.mjs",
     "doctor": "node scripts/doctor.mjs",
