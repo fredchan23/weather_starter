@@ -4,6 +4,20 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-21 | branch `main` | commit `pending` | add workspace ESLint setup
+
+- status: implemented
+- implementation request: Install and configure ESLint for the monorepo so it lints both the React frontend and TypeScript backend, and expose a root `lint` script.
+- implementation challenges:
+  - The repo already had ESLint 9 and plugin dependencies but no active config file or lint script, so a flat config had to be added at the workspace root.
+  - Installing `@eslint/js` without a version pin tried to pull v10, which conflicts with ESLint 9. The package had to be aligned to the v9 line.
+  - Enabling lint surfaced two pre-existing unused-symbol errors, requiring a small frontend cleanup and an underscore-ignore convention for intentionally unused middleware args.
+- scope: `eslint.config.js` (new), `package.json`, `frontend/src/components/Hero.tsx`.
+- decisions: Use a single root flat config covering `backend/**/*.ts` and `frontend/**/*.{ts,tsx}`, include React and React Hooks rules for frontend files, and add underscore-based ignore patterns for `@typescript-eslint/no-unused-vars`.
+- risks: The underscore-ignore convention can hide accidental unused variables if they are intentionally prefixed; this trade-off is accepted for Express-style handler signatures.
+- verification: `npm run lint`, `npm test`, `npm run build`.
+- follow-up: Optionally add stricter type-aware linting (`typescript-eslint` type-checked configs) once per-package `tsconfig` project references are standardized for ESLint.
+
 ## 2026-05-18 | branch `main` | commit `pending` | add Apple Weather-style MapCard
 
 - status: implemented

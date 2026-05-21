@@ -7,6 +7,7 @@
     "prepare": "husky",
     "dev": "node scripts/dev.mjs",
     "format": "prettier --write .",
+    "lint": "eslint \"backend/**/*.{ts,tsx}\" \"frontend/**/*.{ts,tsx}\"",
     "build": "npm run build -w frontend && tsc -p backend/tsconfig.json",
     "start": "node scripts/start.mjs",
     "doctor": "node scripts/doctor.mjs",
@@ -31,6 +32,7 @@
     "vite": "^7.3.1"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/express": "^4.17.21",
     "@types/leaflet": "^1.9.21",
     "@types/node": "^22.10.2",

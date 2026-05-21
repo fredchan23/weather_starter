@@ -137,21 +137,3 @@ export function Hero() {
     </main>
   );
 }
-
-interface ConditionStatProps {
-  label: string;
-  value: string;
-}
-
-function ConditionStat({ label, value }: ConditionStatProps) {
-  return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.05] px-3 py-2 text-center backdrop-blur-sm">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
-        {label}
-      </div>
-      <div className="mt-1 text-lg font-medium tabular-nums text-white/95">
-        {value}
-      </div>
-    </div>
-  );
-}
