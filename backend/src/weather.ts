@@ -182,8 +182,13 @@ export class SingaporeWeatherClient {
     } = {},
   ) {}
 
-  async getCurrentWeather(latitude: number, longitude: number): Promise<WeatherSnapshot> {
-    const forecastPayload = await this.fetchLatestForecastPayload().catch(() => null);
+  async getCurrentWeather(
+    latitude: number,
+    longitude: number,
+  ): Promise<WeatherSnapshot> {
+    const forecastPayload = await this.fetchLatestForecastPayload().catch(
+      () => null,
+    );
     if (!forecastPayload) {
       return this.emptyForecastSnapshot();
     }
@@ -200,7 +205,9 @@ export class SingaporeWeatherClient {
       uv,
       airQuality,
     ] = await Promise.all([
-      Promise.resolve(this.snapshotFromPayload(forecastPayload, latitude, longitude)),
+      Promise.resolve(
+        this.snapshotFromPayload(forecastPayload, latitude, longitude),
+      ),
       this.fetchTwentyFourHourForecast(latitude, longitude).catch(() => ({
         low: null,
         high: null,
@@ -211,14 +218,18 @@ export class SingaporeWeatherClient {
         days: [],
         timestamp: null,
       })),
-      this.fetchNearestReading('air-temperature', latitude, longitude).catch(() => ({
-        value: null,
-        timestamp: null,
-      })),
-      this.fetchNearestReading('relative-humidity', latitude, longitude).catch(() => ({
-        value: null,
-        timestamp: null,
-      })),
+      this.fetchNearestReading('air-temperature', latitude, longitude).catch(
+        () => ({
+          value: null,
+          timestamp: null,
+        }),
+      ),
+      this.fetchNearestReading('relative-humidity', latitude, longitude).catch(
+        () => ({
+          value: null,
+          timestamp: null,
+        }),
+      ),
       this.fetchNearestReading('rainfall', latitude, longitude).catch(() => ({
         value: null,
         timestamp: null,
@@ -227,10 +238,12 @@ export class SingaporeWeatherClient {
         value: null,
         timestamp: null,
       })),
-      this.fetchNearestReading('wind-direction', latitude, longitude).catch(() => ({
-        value: null,
-        timestamp: null,
-      })),
+      this.fetchNearestReading('wind-direction', latitude, longitude).catch(
+        () => ({
+          value: null,
+          timestamp: null,
+        }),
+      ),
       this.fetchUvIndex().catch(() => ({
         value: null,
         timestamp: null,
@@ -278,7 +291,9 @@ export class SingaporeWeatherClient {
   }
 
   async fetchLatestForecastPayload(): Promise<ForecastPayload> {
-    return this.fetchJson(`${this.apiBaseUrl()}/v2/real-time/api/two-hr-forecast`);
+    return this.fetchJson(
+      `${this.apiBaseUrl()}/v2/real-time/api/two-hr-forecast`,
+    );
   }
 
   async fetchNearestReading(
@@ -294,7 +309,8 @@ export class SingaporeWeatherClient {
     const payload = await this.fetchReadingPayload(endpoint);
     if (payload.code !== undefined && payload.code !== 0) {
       throw new WeatherProviderError(
-        payload.errorMsg ?? `Weather provider returned an error for ${endpoint}`,
+        payload.errorMsg ??
+          `Weather provider returned an error for ${endpoint}`,
       );
     }
 
@@ -308,9 +324,17 @@ export class SingaporeWeatherClient {
     const valueByStation = new Map(
       values
         .map((entry) => [entry.stationId, Number(entry.value)] as const)
-        .filter((entry): entry is [string, number] => Boolean(entry[0]) && !Number.isNaN(entry[1])),
+        .filter(
+          (entry): entry is [string, number] =>
+            Boolean(entry[0]) && !Number.isNaN(entry[1]),
+        ),
     );
-    const station = nearestStation(stations, latitude, longitude, valueByStation);
+    const station = nearestStation(
+      stations,
+      latitude,
+      longitude,
+      valueByStation,
+    );
     return {
       value: station ? (valueByStation.get(station.id) ?? null) : null,
       timestamp: latestReading?.timestamp ?? null,
@@ -321,8 +345,13 @@ export class SingaporeWeatherClient {
     return this.fetchJson(`${this.apiBaseUrl()}/v2/real-time/api/${endpoint}`);
   }
 
-  async fetchUvIndex(): Promise<{ value: number | null; timestamp: string | null }> {
-    const payload = await this.fetchJson<UvPayload>(`${this.apiBaseUrl()}/v2/real-time/api/uv`);
+  async fetchUvIndex(): Promise<{
+    value: number | null;
+    timestamp: string | null;
+  }> {
+    const payload = await this.fetchJson<UvPayload>(
+      `${this.apiBaseUrl()}/v2/real-time/api/uv`,
+    );
     if (payload.code !== undefined && payload.code !== 0) {
       throw new WeatherProviderError(
         payload.errorMsg ?? 'Weather provider returned an error for uv',
@@ -333,7 +362,8 @@ export class SingaporeWeatherClient {
     const latest = record?.index?.[0];
     return {
       value: numberOrNull(latest?.value),
-      timestamp: record?.updatedTimestamp ?? latest?.hour ?? record?.timestamp ?? null,
+      timestamp:
+        record?.updatedTimestamp ?? latest?.hour ?? record?.timestamp ?? null,
     };
   }
 
@@ -358,7 +388,11 @@ export class SingaporeWeatherClient {
       }
     }
 
-    const region = nearestRegionName(psiPayload.data?.regionMetadata ?? [], latitude, longitude);
+    const region = nearestRegionName(
+      psiPayload.data?.regionMetadata ?? [],
+      latitude,
+      longitude,
+    );
     const psiItem = psiPayload.data?.items?.[0];
     const pm25Item = pm25Payload.data?.items?.[0];
     return {
@@ -386,26 +420,34 @@ export class SingaporeWeatherClient {
     );
     if (payload.code !== undefined && payload.code !== 0) {
       throw new WeatherProviderError(
-        payload.errorMsg ?? 'Weather provider returned a 24-hour forecast error',
+        payload.errorMsg ??
+          'Weather provider returned a 24-hour forecast error',
       );
     }
 
     const record = payload.data?.records?.[0];
-    const region = nearestRegionName(defaultRegions(), latitude, longitude) ?? 'central';
+    const region =
+      nearestRegionName(defaultRegions(), latitude, longitude) ?? 'central';
     return {
       low: numberOrNull(record?.general?.temperature?.low),
       high: numberOrNull(record?.general?.temperature?.high),
       periods: (record?.periods ?? [])
         .map((period) => ({
           label: period.timePeriod?.text ?? '',
-          forecast: period.regions?.[region]?.text ?? period.regions?.central?.text ?? '',
+          forecast:
+            period.regions?.[region]?.text ??
+            period.regions?.central?.text ??
+            '',
         }))
         .filter((period) => period.label && period.forecast),
       timestamp: record?.updatedTimestamp ?? record?.timestamp ?? null,
     };
   }
 
-  async fetchFourDayForecast(): Promise<{ days: DailyForecast[]; timestamp: string | null }> {
+  async fetchFourDayForecast(): Promise<{
+    days: DailyForecast[];
+    timestamp: string | null;
+  }> {
     const payload = await this.fetchJson<FourDayPayload>(
       `${this.legacyApiBaseUrl()}/v1/environment/4-day-weather-forecast`,
     );
@@ -433,26 +475,37 @@ export class SingaporeWeatherClient {
 
   private async fetchJson<T>(url: string): Promise<T> {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.options.timeoutMs ?? 8000);
+    const timeout = setTimeout(
+      () => controller.abort(),
+      this.options.timeoutMs ?? 8000,
+    );
 
     try {
       const response = await fetch(url, {
         signal: controller.signal,
         headers: {
           Accept: 'application/json',
-          'User-Agent': this.options.userAgent ?? 'weather-starter/0.1 (educational project)',
+          'User-Agent':
+            this.options.userAgent ??
+            'weather-starter/0.1 (educational project)',
           ...(this.options.apiKey ? { 'x-api-key': this.options.apiKey } : {}),
         },
       });
 
       if (!response.ok) {
         if (response.status === 429) {
-          throw new WeatherProviderError('Weather provider rate limit reached (HTTP 429)');
+          throw new WeatherProviderError(
+            'Weather provider rate limit reached (HTTP 429)',
+          );
         }
         if (response.status === 401 || response.status === 403) {
-          throw new WeatherProviderError('Weather provider rejected request (check API key)');
+          throw new WeatherProviderError(
+            'Weather provider rejected request (check API key)',
+          );
         }
-        throw new WeatherProviderError(`Weather provider returned HTTP ${response.status}`);
+        throw new WeatherProviderError(
+          `Weather provider returned HTTP ${response.status}`,
+        );
       }
 
       return (await response.json()) as T;
@@ -470,7 +523,9 @@ export class SingaporeWeatherClient {
     longitude: number,
   ): WeatherSnapshot {
     if (payload.code !== undefined && payload.code !== 0) {
-      throw new WeatherProviderError(payload.errorMsg ?? 'Weather provider returned an error');
+      throw new WeatherProviderError(
+        payload.errorMsg ?? 'Weather provider returned an error',
+      );
     }
 
     const root = payload.data ?? payload;
@@ -628,7 +683,12 @@ function nearestStation(
   for (const station of stations) {
     const lat = Number(station.location?.latitude);
     const lon = Number(station.location?.longitude);
-    if (!station.id || Number.isNaN(lat) || Number.isNaN(lon) || !valueByStation.has(station.id))
+    if (
+      !station.id ||
+      Number.isNaN(lat) ||
+      Number.isNaN(lon) ||
+      !valueByStation.has(station.id)
+    )
       continue;
 
     const distance = (lat - latitude) ** 2 + (lon - longitude) ** 2;
@@ -661,12 +721,14 @@ function valueForRegion(
   return numberOrNull(values[region]);
 }
 
-
 function defaultRegions(): RegionMetadata[] {
   return [
     { name: 'west', labelLocation: { latitude: 1.35735, longitude: 103.7 } },
     { name: 'north', labelLocation: { latitude: 1.41803, longitude: 103.82 } },
-    { name: 'central', labelLocation: { latitude: 1.35735, longitude: 103.82 } },
+    {
+      name: 'central',
+      labelLocation: { latitude: 1.35735, longitude: 103.82 },
+    },
     { name: 'south', labelLocation: { latitude: 1.29587, longitude: 103.82 } },
     { name: 'east', labelLocation: { latitude: 1.35735, longitude: 103.94 } },
   ];

@@ -16,7 +16,9 @@ export function Hero() {
       <main className="flex flex-1 flex-col p-10">
         <div className="flex flex-1 flex-col items-center justify-center gap-6">
           <div className="text-center">
-            <p className="text-2xl font-light text-white/85">Select a location</p>
+            <p className="text-2xl font-light text-white/85">
+              Select a location
+            </p>
             <p className="mt-2 text-sm text-white/60">
               Add a Singapore coordinate from the sidebar to see its weather.
             </p>
@@ -31,7 +33,8 @@ export function Hero() {
 
   const isHome = locations[0]?.id === selected.id;
   const area =
-    selected.weather?.area || `${selected.latitude.toFixed(3)}, ${selected.longitude.toFixed(3)}`;
+    selected.weather?.area ||
+    `${selected.latitude.toFixed(3)}, ${selected.longitude.toFixed(3)}`;
   const condition = selected.weather?.condition || 'Conditions unavailable';
   const observed = formatTime(selected.weather?.observed_at);
   const validPeriod = selected.weather?.valid_period_text;
@@ -42,7 +45,8 @@ export function Hero() {
   const low = formatTemperature(selected.weather?.forecast_low_c);
   const hasTemperature = selected.weather?.temperature_c !== null;
   const hasHighLow =
-    selected.weather?.forecast_high_c !== null || selected.weather?.forecast_low_c !== null;
+    selected.weather?.forecast_high_c !== null ||
+    selected.weather?.forecast_low_c !== null;
   const fallbackPeriods: ForecastPeriod[] =
     selected.weather?.forecast_periods?.length > 0
       ? selected.weather.forecast_periods
@@ -71,7 +75,9 @@ export function Hero() {
               <span>Home</span>
             </div>
           )}
-          <h1 className="text-4xl font-light leading-tight text-white">{area}</h1>
+          <h1 className="text-4xl font-light leading-tight text-white">
+            {area}
+          </h1>
           {hasTemperature ? (
             <>
               <div className="mt-2 text-[6.5rem] font-extralight leading-none tracking-tight text-white">
@@ -89,14 +95,20 @@ export function Hero() {
               <div className="mt-4 rounded-full border border-white/15 bg-white/[0.08] px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
                 Two-hour forecast
               </div>
-              <div className="mt-4 text-5xl font-light leading-tight text-white">{condition}</div>
+              <div className="mt-4 text-5xl font-light leading-tight text-white">
+                {condition}
+              </div>
             </>
           )}
-          {observed && <div className="mt-3 text-xs text-white/55">Updated {observed}</div>}
+          {observed && (
+            <div className="mt-3 text-xs text-white/55">Updated {observed}</div>
+          )}
         </header>
 
         {validPeriod && (
-          <p className="px-2 pb-1 text-center text-xs text-white/65">{validPeriod}</p>
+          <p className="px-2 pb-1 text-center text-xs text-white/65">
+            {validPeriod}
+          </p>
         )}
 
         <HourlyStrip periods={fallbackPeriods} />
@@ -111,7 +123,9 @@ export function Hero() {
             disabled={isRefreshing}
             className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-white/85 backdrop-blur-xl hover:bg-white/[0.14] disabled:cursor-not-allowed disabled:opacity-60"
           >
-            <RefreshIcon className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshIcon
+              className={`h-3.5 w-3.5 ${isRefreshing ? 'animate-spin' : ''}`}
+            />
             <span>{isRefreshing ? 'Refreshing…' : 'Refresh'}</span>
           </button>
           <p>
@@ -135,7 +149,9 @@ function ConditionStat({ label, value }: ConditionStatProps) {
       <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/50">
         {label}
       </div>
-      <div className="mt-1 text-lg font-medium tabular-nums text-white/95">{value}</div>
+      <div className="mt-1 text-lg font-medium tabular-nums text-white/95">
+        {value}
+      </div>
     </div>
   );
 }

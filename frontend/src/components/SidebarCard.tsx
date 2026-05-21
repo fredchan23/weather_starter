@@ -14,19 +14,23 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
   const isSelected = selectedId === location.id;
   const observed = formatTime(location.weather.observed_at);
   const area =
-    location.weather.area || `${location.latitude.toFixed(3)}, ${location.longitude.toFixed(3)}`;
+    location.weather.area ||
+    `${location.latitude.toFixed(3)}, ${location.longitude.toFixed(3)}`;
   const condition = location.weather.condition || '-';
   const temperature = formatTemperature(location.weather.temperature_c);
   const high = formatTemperature(location.weather.forecast_high_c);
   const low = formatTemperature(location.weather.forecast_low_c);
   const humidity = formatNumber(location.weather.humidity_percent);
   const rainfall = formatNumber(location.weather.rainfall_mm, 1);
-  const temperatureDisplay = temperature === '--°' ? temperature : `${temperature}C`;
+  const temperatureDisplay =
+    temperature === '--°' ? temperature : `${temperature}C`;
   const hasTemperature = location.weather.temperature_c !== null;
   const hasHighLow =
-    location.weather.forecast_high_c !== null || location.weather.forecast_low_c !== null;
+    location.weather.forecast_high_c !== null ||
+    location.weather.forecast_low_c !== null;
   const hasCurrentConditionReadings =
-    location.weather.humidity_percent !== null || location.weather.rainfall_mm !== null;
+    location.weather.humidity_percent !== null ||
+    location.weather.rainfall_mm !== null;
 
   const onSelect = () => select(location.id);
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -63,7 +67,9 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
       </button>
       <div className="flex items-start justify-between gap-3 px-4 pt-3 pr-10">
         <div className="min-w-0">
-          <div className="truncate text-lg font-semibold leading-tight text-white">{area}</div>
+          <div className="truncate text-lg font-semibold leading-tight text-white">
+            {area}
+          </div>
           <div className="mt-0.5 flex items-center gap-1.5 text-[11px] text-white/70">
             {isHome ? (
               <>
@@ -116,5 +122,7 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
 }
 
 function formatNumber(value: number | null | undefined, digits = 0): string {
-  return typeof value === 'number' && Number.isFinite(value) ? value.toFixed(digits) : '--';
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value.toFixed(digits)
+    : '--';
 }

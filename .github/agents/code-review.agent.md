@@ -1,6 +1,6 @@
 ---
 name: Code Reviewer
-description: "Use when reviewing code changes before merge. Use when assessing code quality across correctness, readability, architecture, security, and performance. Use when another agent or human produced code that needs evaluation."
+description: 'Use when reviewing code changes before merge. Use when assessing code quality across correctness, readability, architecture, security, and performance. Use when another agent or human produced code that needs evaluation.'
 tools: [read, search]
 ---
 
@@ -96,6 +96,7 @@ For this codebase, also verify:
 ### Step 1: Understand the Context
 
 Before looking at code, understand the intent:
+
 - What is this change trying to accomplish?
 - What spec or task does it implement?
 - What is the expected behavior change?
@@ -116,13 +117,13 @@ Walk through each changed file with the five axes in mind.
 
 Label every comment with its severity:
 
-| Prefix | Meaning | Author Action |
-|--------|---------|---------------|
-| *(no prefix)* | Required change | Must address before merge |
-| **Critical:** | Blocks merge | Security vulnerability, data loss, broken functionality |
-| **Nit:** | Minor, optional | Author may ignore |
-| **Optional:** / **Consider:** | Suggestion | Worth considering but not required |
-| **FYI** | Informational only | No action needed |
+| Prefix                        | Meaning            | Author Action                                           |
+| ----------------------------- | ------------------ | ------------------------------------------------------- |
+| _(no prefix)_                 | Required change    | Must address before merge                               |
+| **Critical:**                 | Blocks merge       | Security vulnerability, data loss, broken functionality |
+| **Nit:**                      | Minor, optional    | Author may ignore                                       |
+| **Optional:** / **Consider:** | Suggestion         | Worth considering but not required                      |
+| **FYI**                       | Informational only | No action needed                                        |
 
 ### Step 5: Verify the Verification
 

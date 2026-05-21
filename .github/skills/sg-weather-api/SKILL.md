@@ -8,11 +8,13 @@ description: Singapore data.gov.sg weather API reference - endpoints, response s
 Base URL: https://api-open.data.gov.sg
 
 ## 2-Hour Forecast (used in this app)
+
 - GET /v2/real-time/api/two-hr-forecast
 - Area-based forecasts grouped by named areas
 - Returns area metadata and per-area conditions
 
 ## Realtime Station Readings
+
 - GET /v2/real-time/api/air-temperature
 - GET /v2/real-time/api/relative-humidity
 - GET /v2/real-time/api/rainfall
@@ -20,5 +22,6 @@ Base URL: https://api-open.data.gov.sg
 - GET /v2/real-time/api/wind-direction
 
 ## Extended Forecasts
+
 - GET /v1/environment/24-hour-weather-forecast
 - GET /v1/environment/4-day-weather-forecast

@@ -23,7 +23,14 @@ const weather: WeatherSnapshot = {
   pm25_one_hourly: 9,
   air_quality_region: 'central',
   forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
-  daily_forecast: [{ date: '2026-05-04', forecast: 'Cloudy', temperature_low_c: 25, temperature_high_c: 32 }],
+  daily_forecast: [
+    {
+      date: '2026-05-04',
+      forecast: 'Cloudy',
+      temperature_low_c: 25,
+      temperature_high_c: 32,
+    },
+  ],
 };
 
 type RouteMethod = 'get' | 'post' | 'delete';
@@ -70,7 +77,8 @@ function getRouteHandler(router: Router, method: RouteMethod, path: string) {
     }>;
   };
   const layer = stack.stack.find(
-    (candidate) => candidate.route?.path === path && candidate.route.methods?.[method],
+    (candidate) =>
+      candidate.route?.path === path && candidate.route.methods?.[method],
   );
   if (!layer?.route?.stack[0]) {
     throw new Error(`Route ${method.toUpperCase()} ${path} not found`);
@@ -158,7 +166,9 @@ describe('locations API', () => {
 
     const listResponse = await callRoute(router, 'get', '/locations');
     expect(listResponse.statusCode).toBe(200);
-    expect((listResponse.body as { locations: unknown[] }).locations).toHaveLength(1);
+    expect(
+      (listResponse.body as { locations: unknown[] }).locations,
+    ).toHaveLength(1);
   });
 
   it('deletes a location', async () => {
@@ -167,19 +177,31 @@ describe('locations API', () => {
     });
     const created = createResponse.body as { id: number };
 
-    const deleteResponse = await callRoute(router, 'delete', '/locations/:locationId', {
-      params: { locationId: String(created.id) },
-    });
+    const deleteResponse = await callRoute(
+      router,
+      'delete',
+      '/locations/:locationId',
+      {
+        params: { locationId: String(created.id) },
+      },
+    );
 
     expect(deleteResponse.statusCode).toBe(204);
     expect(deleteResponse.ended).toBe(true);
 
     const listResponse = await callRoute(router, 'get', '/locations');
-    expect((listResponse.body as { locations: unknown[] }).locations).toHaveLength(0);
+    expect(
+      (listResponse.body as { locations: unknown[] }).locations,
+    ).toHaveLength(0);
 
-    const getResponse = await callRoute(router, 'get', '/locations/:locationId', {
-      params: { locationId: String(created.id) },
-    });
+    const getResponse = await callRoute(
+      router,
+      'get',
+      '/locations/:locationId',
+      {
+        params: { locationId: String(created.id) },
+      },
+    );
 
     expect(getResponse.statusCode).toBe(404);
   });
@@ -205,9 +227,14 @@ describe('locations API', () => {
       daily_forecast: [],
     };
 
-    const refreshResponse = await callRoute(router, 'post', '/locations/:locationId/refresh', {
-      params: { locationId: String(created.id) },
-    });
+    const refreshResponse = await callRoute(
+      router,
+      'post',
+      '/locations/:locationId/refresh',
+      {
+        params: { locationId: String(created.id) },
+      },
+    );
 
     expect(refreshResponse.statusCode).toBe(200);
     expect(refreshResponse.body).toMatchObject({
@@ -235,9 +262,14 @@ describe('locations API', () => {
   });
 
   it('returns 404 when deleting a missing location', async () => {
-    const response = await callRoute(router, 'delete', '/locations/:locationId', {
-      params: { locationId: '999' },
-    });
+    const response = await callRoute(
+      router,
+      'delete',
+      '/locations/:locationId',
+      {
+        params: { locationId: '999' },
+      },
+    );
 
     expect(response.statusCode).toBe(404);
     expect(response.body).toMatchObject({ detail: 'Location not found' });
@@ -251,9 +283,13 @@ describe('locations API', () => {
     ];
 
     for (const coords of outOfBounds) {
-      const response = await callRoute(router, 'post', '/locations', { body: coords });
+      const response = await callRoute(router, 'post', '/locations', {
+        body: coords,
+      });
       expect(response.statusCode).toBe(422);
-      expect(response.body).toMatchObject({ detail: expect.stringContaining('Singapore') });
+      expect(response.body).toMatchObject({
+        detail: expect.stringContaining('Singapore'),
+      });
     }
   });
 
@@ -274,6 +310,8 @@ describe('locations API', () => {
     });
 
     expect(response.statusCode).toBe(409);
-    expect(response.body).toMatchObject({ detail: expect.stringContaining('already exists') });
+    expect(response.body).toMatchObject({
+      detail: expect.stringContaining('already exists'),
+    });
   });
 });

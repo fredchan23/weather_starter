@@ -1,6 +1,9 @@
 import { spawn } from 'node:child_process';
 
-const nodeOptions = [process.env.NODE_OPTIONS, '--disable-warning=ExperimentalWarning']
+const nodeOptions = [
+  process.env.NODE_OPTIONS,
+  '--disable-warning=ExperimentalWarning',
+]
   .filter(Boolean)
   .join(' ');
 

@@ -594,7 +594,9 @@ describe('SingaporeWeatherClient', () => {
       throw new Error(`Unexpected fetch URL: ${url}`);
     });
 
-    const client = new SingaporeWeatherClient({ baseUrl: 'https://api-open.data.gov.sg' });
+    const client = new SingaporeWeatherClient({
+      baseUrl: 'https://api-open.data.gov.sg',
+    });
     const weather = await client.getCurrentWeather(1.351, 103.83);
 
     expect(weather).toMatchObject({

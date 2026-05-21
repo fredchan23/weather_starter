@@ -62,14 +62,14 @@ npm run db:migrate  # Apply Drizzle migrations to backend/weather.db
 
 ## API
 
-| Method | Endpoint                     | Description                    |
-| ------ | ---------------------------- | ------------------------------ |
-| `GET`  | `/health`                    | Health check                   |
-| `GET`  | `/api/locations`             | List all locations             |
-| `POST` | `/api/locations`             | Create a location              |
-| `GET`  | `/api/locations/:id`         | Get a single location          |
-| `DELETE` | `/api/locations/:id`     | Delete a location              |
-| `POST` | `/api/locations/:id/refresh` | Refresh weather for a location |
+| Method   | Endpoint                     | Description                    |
+| -------- | ---------------------------- | ------------------------------ |
+| `GET`    | `/health`                    | Health check                   |
+| `GET`    | `/api/locations`             | List all locations             |
+| `POST`   | `/api/locations`             | Create a location              |
+| `GET`    | `/api/locations/:id`         | Get a single location          |
+| `DELETE` | `/api/locations/:id`         | Delete a location              |
+| `POST`   | `/api/locations/:id/refresh` | Refresh weather for a location |
 
 Create a location:
 
@@ -218,11 +218,11 @@ Redesign the app layout and styling. Use polished weather condition cards, meani
 
 Add a map card to the dashboard as part of the themed dashboard experience. Show all saved locations as pins with small weather labels above them. The card can expand into a full-screen map view, but users should continue adding locations through the existing add-location flow rather than creating pins directly from the map.
 
-| Layer    | What to do                                                                                                       |
-| -------- | ---------------------------------------------------------------------------------------------------------------- |
-| Backend  | No changes needed                                                                                                |
-| Frontend | Restyle existing components with Tailwind. Add weather icons, condition-based accents, better mobile states, and a map card using Leaflet/React Leaflet or another map library. |
-| NPM packages | `leaflet`, `react-leaflet` or equivalent |
+| Layer        | What to do                                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Backend      | No changes needed                                                                                                                                                               |
+| Frontend     | Restyle existing components with Tailwind. Add weather icons, condition-based accents, better mobile states, and a map card using Leaflet/React Leaflet or another map library. |
+| NPM packages | `leaflet`, `react-leaflet` or equivalent                                                                                                                                        |
 
 ### 8. Location detail page with charts
 

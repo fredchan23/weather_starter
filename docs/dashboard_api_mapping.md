@@ -20,18 +20,18 @@ Current app code references:
 
 ## Card To API Map
 
-| Card / UI Surface | data.gov.sg endpoint(s) | What it fills |
-| --- | --- | --- |
-| Location summary card and hero header | `GET /v2/real-time/api/two-hr-forecast`, `GET /v2/real-time/api/air-temperature`, `GET /v2/real-time/api/twenty-four-hr-forecast` | Area name, current condition, current temperature, observed time, and today’s high/low |
-| 24-hour forecast strip (`HourlyStrip`) | `GET /v2/real-time/api/twenty-four-hr-forecast` | Regional forecast periods and the matching forecast text for the selected location |
-| 4-day forecast card (`TenDayForecast`) | `GET /v1/environment/4-day-weather-forecast` | Daily forecast text plus low/high temperature ranges |
-| Air quality tile | `GET /v2/real-time/api/psi`, `GET /v2/real-time/api/pm25` | PSI, PM2.5, and the nearest air-quality region |
-| Wind tile | `GET /v2/real-time/api/wind-speed`, `GET /v2/real-time/api/wind-direction` | Wind speed and direction |
-| UV tile | `GET /v2/real-time/api/uv` | Current UVI and severity label |
-| Temperature tile | `GET /v2/real-time/api/air-temperature` | Current nearest-station temperature |
-| Rainfall tile | `GET /v2/real-time/api/rainfall` | Current nearest-station rainfall |
-| Humidity tile | `GET /v2/real-time/api/relative-humidity` | Current nearest-station humidity |
-| Forecast high tile | `GET /v2/real-time/api/twenty-four-hr-forecast` | Today’s high from the 24-hour forecast |
+| Card / UI Surface                      | data.gov.sg endpoint(s)                                                                                                           | What it fills                                                                          |
+| -------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Location summary card and hero header  | `GET /v2/real-time/api/two-hr-forecast`, `GET /v2/real-time/api/air-temperature`, `GET /v2/real-time/api/twenty-four-hr-forecast` | Area name, current condition, current temperature, observed time, and today’s high/low |
+| 24-hour forecast strip (`HourlyStrip`) | `GET /v2/real-time/api/twenty-four-hr-forecast`                                                                                   | Regional forecast periods and the matching forecast text for the selected location     |
+| 4-day forecast card (`TenDayForecast`) | `GET /v1/environment/4-day-weather-forecast`                                                                                      | Daily forecast text plus low/high temperature ranges                                   |
+| Air quality tile                       | `GET /v2/real-time/api/psi`, `GET /v2/real-time/api/pm25`                                                                         | PSI, PM2.5, and the nearest air-quality region                                         |
+| Wind tile                              | `GET /v2/real-time/api/wind-speed`, `GET /v2/real-time/api/wind-direction`                                                        | Wind speed and direction                                                               |
+| UV tile                                | `GET /v2/real-time/api/uv`                                                                                                        | Current UVI and severity label                                                         |
+| Temperature tile                       | `GET /v2/real-time/api/air-temperature`                                                                                           | Current nearest-station temperature                                                    |
+| Rainfall tile                          | `GET /v2/real-time/api/rainfall`                                                                                                  | Current nearest-station rainfall                                                       |
+| Humidity tile                          | `GET /v2/real-time/api/relative-humidity`                                                                                         | Current nearest-station humidity                                                       |
+| Forecast high tile                     | `GET /v2/real-time/api/twenty-four-hr-forecast`                                                                                   | Today’s high from the 24-hour forecast                                                 |
 
 ## Notes
 
