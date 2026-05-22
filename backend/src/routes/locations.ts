@@ -17,16 +17,32 @@ import {
 import { CONDITION_NOT_REFRESHED } from '../db.js';
 import { logger } from '../logger.js';
 
+interface ForecastArea {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface WeatherClient {
   getCurrentWeather(
     latitude: number,
     longitude: number,
   ): Promise<WeatherSnapshot>;
+  getForecastAreas(): Promise<ForecastArea[]>;
 }
 
 interface LocationsRouterOptions {
   weatherClient?: WeatherClient;
+  forecastAreasTtlMs?: number;
 }
+
+interface ForecastAreasCacheEntry {
+  areas: ForecastArea[];
+  fetched_at: string;
+  expiresAt: number;
+}
+
+const FORECAST_AREAS_TTL_MS = 10 * 60 * 1000;
 
 export function createLocationsRouter(
   options: LocationsRouterOptions = {},
@@ -35,6 +51,8 @@ export function createLocationsRouter(
   const weatherClient =
     options.weatherClient ??
     new SingaporeWeatherClient({ apiKey: process.env.WEATHER_API_KEY });
+  const forecastAreasTtlMs = options.forecastAreasTtlMs ?? FORECAST_AREAS_TTL_MS;
+  let forecastAreasCache: ForecastAreasCacheEntry | null = null;
 
   router.get('/locations', async (_request, response, next) => {
     try {
@@ -70,7 +88,12 @@ export function createLocationsRouter(
         return;
       }
 
-      const location = await createLocation(latitude, longitude);
+      const normalizedLatitude = normalizeCoordinate(latitude);
+      const normalizedLongitude = normalizeCoordinate(longitude);
+      const location = await createLocation(
+        normalizedLatitude,
+        normalizedLongitude,
+      );
 
       try {
         const snapshot = await weatherClient.getCurrentWeather(
@@ -94,6 +117,46 @@ export function createLocationsRouter(
         return;
       }
       next(error);
+    }
+  });
+
+  router.get('/locations/forecast-areas', async (_request, response, next) => {
+    try {
+      const now = Date.now();
+      if (forecastAreasCache && forecastAreasCache.expiresAt > now) {
+        response.json({
+          areas: forecastAreasCache.areas,
+          fetched_at: forecastAreasCache.fetched_at,
+          stale: false,
+        });
+        return;
+      }
+
+      const areas = await weatherClient.getForecastAreas();
+      forecastAreasCache = {
+        areas,
+        fetched_at: new Date().toISOString(),
+        expiresAt: now + forecastAreasTtlMs,
+      };
+      response.json({
+        areas: forecastAreasCache.areas,
+        fetched_at: forecastAreasCache.fetched_at,
+        stale: false,
+      });
+    } catch (error) {
+      if (forecastAreasCache) {
+        response.json({
+          areas: forecastAreasCache.areas,
+          fetched_at: forecastAreasCache.fetched_at,
+          stale: true,
+        });
+        return;
+      }
+
+      const detail =
+        error instanceof Error ? error.message : 'Unable to load forecast areas';
+      response.status(502).json({ detail });
+      return;
     }
   });
 
@@ -155,6 +218,10 @@ export function createLocationsRouter(
   );
 
   return router;
+}
+
+function normalizeCoordinate(value: number): number {
+  return Number(value.toFixed(4));
 }
 
 function mergeWeatherSnapshot(

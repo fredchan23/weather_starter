@@ -33,6 +33,18 @@ export interface WeatherSnapshot {
   daily_forecast: DailyForecast[];
 }
 
+export interface ForecastArea {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
+export interface ForecastAreasResponse {
+  areas: ForecastArea[];
+  fetched_at: string;
+  stale: boolean;
+}
+
 export interface Location {
   id: number;
   latitude: number;

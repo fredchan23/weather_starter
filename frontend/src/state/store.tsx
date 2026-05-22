@@ -60,7 +60,7 @@ export function StoreProvider({ children }: ProviderProps) {
   const create = useCallback(
     async (payload: CreateLocationPayload) => {
       setError(null);
-      logInteraction('location_create_submitted', payload);
+      logInteraction('location_create_submitted');
       try {
         const created = await createLocation(payload);
         const next = await load();
@@ -69,14 +69,10 @@ export function StoreProvider({ children }: ProviderProps) {
         setIsAdding(false);
         logInteraction('location_created', {
           locationId: targetId,
-          latitude: created.latitude,
-          longitude: created.longitude,
         });
       } catch (err) {
         setError(err);
         logInteraction('location_create_failed', {
-          latitude: payload.latitude,
-          longitude: payload.longitude,
           error: err instanceof Error ? err.message : 'Unknown error',
         });
         throw err;

@@ -120,6 +120,13 @@ describe('locations API', () => {
   let router: Router;
   let resetStore: () => Promise<void> = async () => {};
   let currentWeather: WeatherSnapshot = weather;
+  let forecastAreaFetchCount = 0;
+  let forecastAreaFailure: Error | null = null;
+
+  const forecastAreas = [
+    { name: 'Bishan', latitude: 1.351, longitude: 103.839 },
+    { name: 'Woodlands', latitude: 1.435, longitude: 103.786 },
+  ];
 
   beforeAll(async () => {
     tempDir = await mkdtemp(join(tmpdir(), 'weather-starter-test-'));
@@ -128,19 +135,26 @@ describe('locations API', () => {
 
     const db = await import('../db.js');
     resetStore = db.resetStore;
+  });
+
+  beforeEach(async () => {
+    await resetStore();
+    currentWeather = weather;
+    forecastAreaFetchCount = 0;
+    forecastAreaFailure = null;
     const { createLocationsRouter } = await import('./locations.js');
     router = createLocationsRouter({
       weatherClient: {
         async getCurrentWeather() {
           return currentWeather;
         },
+        async getForecastAreas() {
+          forecastAreaFetchCount += 1;
+          if (forecastAreaFailure) throw forecastAreaFailure;
+          return forecastAreas;
+        },
       },
     });
-  });
-
-  beforeEach(async () => {
-    await resetStore();
-    currentWeather = weather;
   });
 
   afterAll(async () => {
@@ -313,5 +327,83 @@ describe('locations API', () => {
     expect(response.body).toMatchObject({
       detail: expect.stringContaining('already exists'),
     });
+  });
+
+  it('returns normalized forecast areas and reuses the cache within ttl', async () => {
+    const firstResponse = await callRoute(
+      router,
+      'get',
+      '/locations/forecast-areas',
+    );
+
+    expect(firstResponse.statusCode).toBe(200);
+    expect(firstResponse.body).toMatchObject({
+      stale: false,
+      areas: forecastAreas,
+    });
+    expect(
+      (firstResponse.body as { fetched_at: string }).fetched_at,
+    ).toEqual(expect.any(String));
+    expect(forecastAreaFetchCount).toBe(1);
+
+    const secondResponse = await callRoute(
+      router,
+      'get',
+      '/locations/forecast-areas',
+    );
+
+    expect(secondResponse.statusCode).toBe(200);
+    expect(secondResponse.body).toMatchObject({
+      stale: false,
+      areas: forecastAreas,
+    });
+    expect(forecastAreaFetchCount).toBe(1);
+  });
+
+  it('serves stale forecast areas when the upstream request fails after caching', async () => {
+    const { createLocationsRouter } = await import('./locations.js');
+    router = createLocationsRouter({
+      forecastAreasTtlMs: 0,
+      weatherClient: {
+        async getCurrentWeather() {
+          return currentWeather;
+        },
+        async getForecastAreas() {
+          forecastAreaFetchCount += 1;
+          if (forecastAreaFailure) throw forecastAreaFailure;
+          return forecastAreas;
+        },
+      },
+    });
+
+    const initialResponse = await callRoute(router, 'get', '/locations/forecast-areas');
+    expect(initialResponse.statusCode).toBe(200);
+
+    forecastAreaFailure = new Error('upstream unavailable');
+
+    const staleResponse = await callRoute(
+      router,
+      'get',
+      '/locations/forecast-areas',
+    );
+
+    expect(staleResponse.statusCode).toBe(200);
+    expect(staleResponse.body).toMatchObject({
+      stale: true,
+      areas: forecastAreas,
+    });
+    expect(forecastAreaFetchCount).toBe(2);
+  });
+
+  it('returns 502 when forecast areas cannot be loaded and no cache exists', async () => {
+    forecastAreaFailure = new Error('upstream unavailable');
+
+    const response = await callRoute(router, 'get', '/locations/forecast-areas');
+
+    expect(response.statusCode).toBe(502);
+    expect(response.body).toMatchObject({
+      detail: 'upstream unavailable',
+    });
+    expect(forecastAreaFetchCount).toBe(1);
   });
 });

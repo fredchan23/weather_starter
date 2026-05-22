@@ -46,6 +46,8 @@ This project runs Portless on an unprivileged local proxy port by default, so no
 http://weather-starter.localhost:1355
 ```
 
+That `.localhost` origin is treated as a secure context by modern browsers, so the built-in geolocation flow works without enabling HTTPS manually.
+
 ## Useful Commands
 
 ```bash
@@ -66,6 +68,7 @@ npm run db:migrate  # Apply Drizzle migrations to backend/weather.db
 | -------- | ---------------------------- | ------------------------------ |
 | `GET`    | `/health`                    | Health check                   |
 | `GET`    | `/api/locations`             | List all locations             |
+| `GET`    | `/api/locations/forecast-areas` | Fetch Singapore forecast areas |
 | `POST`   | `/api/locations`             | Create a location              |
 | `GET`    | `/api/locations/:id`         | Get a single location          |
 | `DELETE` | `/api/locations/:id`         | Delete a location              |
@@ -165,7 +168,7 @@ Implemented via `DELETE /api/locations/:id` and a top-right delete button in `Si
 
 ### 2. Geolocation + auto-detect
 
-Add a "Use my location" button that detects the user's position, finds the nearest Singapore forecast area, and adds it automatically. Works on local development origins; if you need HTTPS, run Portless with `PORTLESS_HTTPS=1`.
+Implemented with a primary "Use my location" button in the collapsed add flow. It detects the user's position, snaps it to the nearest Singapore forecast area, and falls back to manual coordinates when needed. Works on local development origins without extra HTTPS setup.
 
 | Layer    | What to do                                                                          |
 | -------- | ----------------------------------------------------------------------------------- |

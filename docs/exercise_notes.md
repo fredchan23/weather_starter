@@ -4,6 +4,20 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-22 | branch `main` | commit `pending` | use my location and forecast areas
+
+- status: implemented
+- implementation request: Add a default-on "Use my location" flow that resolves the browser position to the nearest Singapore forecast area, deduplicates against saved locations, and keeps manual coordinate entry available with the same snapping pipeline.
+- implementation challenges:
+  - The backend already knew how to match a coordinate to a forecast area inside the weather client, but the locations router still needed its own cached forecast-areas endpoint for the frontend to reuse.
+  - Duplicate prevention had to move onto normalized 4-decimal coordinates so the manual and geolocation paths would agree on what counts as the same location.
+  - The new add flow needed to stay accessible and transparent, so the component had to juggle busy states, inline status messaging, and fallback explanations without turning into a modal workflow.
+- scope: `backend/src/weather.ts`, `backend/src/routes/locations.ts`, `backend/src/routes/locations.test.ts`, `frontend/src/api.ts`, `frontend/src/locationHelpers.ts`, `frontend/src/components/AddLocationForm.tsx`, `frontend/src/state/store.tsx`, `frontend/src/types.ts`, `README.md`.
+- decisions: Added `GET /api/locations/forecast-areas` with TTL caching and stale fallback, normalized create coordinates to 4 decimals before persistence, introduced shared frontend helpers for snapping and duplicate checks, and made the add form geolocation-first with a manual fallback path.
+- risks: The frontend still falls back to a direct create when forecast metadata is unavailable and the coordinate is within Singapore bounds, so stale or missing area metadata can slightly change the wording of the success state.
+- verification: `npm test -- --run backend/src/routes/locations.test.ts`, `npm run build`, `npm test`.
+- follow-up: If the product should surface richer analytics, thread the source and fallback flags from the new flow into the existing logging pipeline.
+
 ## 2026-05-21 | branch `main` | commit `pending` | add workspace ESLint setup
 
 - status: implemented

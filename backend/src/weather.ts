@@ -151,6 +151,12 @@ export interface DailyForecast {
   temperature_high_c: number | null;
 }
 
+export interface ForecastArea {
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface WeatherSnapshot {
   condition: string;
   observed_at: string;
@@ -294,6 +300,12 @@ export class SingaporeWeatherClient {
     return this.fetchJson(
       `${this.apiBaseUrl()}/v2/real-time/api/two-hr-forecast`,
     );
+  }
+
+  async getForecastAreas(): Promise<ForecastArea[]> {
+    const payload = await this.fetchLatestForecastPayload();
+    const root = payload.data ?? payload;
+    return forecastAreasFromMetadata(root.area_metadata ?? []);
   }
 
   async fetchNearestReading(
@@ -649,6 +661,24 @@ function nearestAreaName(
   }
 
   return nearest?.name ?? null;
+}
+
+function forecastAreasFromMetadata(areaMetadata: AreaMetadata[]): ForecastArea[] {
+  return areaMetadata
+    .map((area) => {
+      const latitude = Number(area.label_location?.latitude);
+      const longitude = Number(area.label_location?.longitude);
+      if (!area.name || Number.isNaN(latitude) || Number.isNaN(longitude)) {
+        return null;
+      }
+
+      return {
+        name: area.name,
+        latitude,
+        longitude,
+      } satisfies ForecastArea;
+    })
+    .filter((area): area is ForecastArea => area !== null);
 }
 
 function nearestRegionName(
