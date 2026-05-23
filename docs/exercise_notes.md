@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-23 | branch `main` | commit `pending` | fix manual coordinate input overlap
+
+- status: implemented
+- implementation request: Fix overlapping latitude and longitude inputs in the manual add-location form.
+- implementation challenges:
+  - The overlap appeared at narrower widths where the two fixed columns and intrinsic input sizing could force fields into each other.
+  - The fix needed to preserve the existing side-by-side layout on larger screens without changing validation or submit behavior.
+- scope: `frontend/src/components/AddLocationForm.tsx`.
+- decisions: Switched the coordinate grid to one column by default and two columns from the small breakpoint, and added `w-full min-w-0` constraints on both labels and number inputs so each field stays inside its grid track.
+- risks: Very narrow screens now stack coordinates vertically, which is intentional but slightly changes visual density in the sidebar.
+- verification: `npm test`, `npm run build`.
+- follow-up: None.
+
 ## 2026-05-22 | branch `main` | commit `pending` | use my location and forecast areas
 
 - status: implemented
