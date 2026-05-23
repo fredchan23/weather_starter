@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-23 | branch `main` | commit `pending` | document duplicate precheck logging behavior
+
+- status: implemented
+- implementation request: Document why adding a duplicate location can show an in-app duplicate message without producing a backend level 40 warning log.
+- implementation challenges:
+  - Frontend interaction logs (`/api/logs`) and backend warning logs (`logger.warn`) are emitted by different code paths, which can look similar in `app.log` unless the route and message are checked.
+  - Duplicate behavior depends on whether the request is preempted in the client or reaches `POST /api/locations` and triggers a database uniqueness error.
+- scope: `frontend/src/components/AddLocationForm.tsx`, `backend/src/routes/locations.ts`, `backend/logs/app.log`, `docs/exercise_notes.md`.
+- decisions: Keep the current frontend-first duplicate handling; when a duplicate is detected in the client, select the existing location, show "Already saved. Showing ...", and skip the create API call.
+- risks: The backend duplicate warning path may be under-observed in manual testing because normal UI usage short-circuits duplicate submissions before they hit the server.
+- verification: `cat backend/logs/app.log | jq 'select(.level == 40)'`, `grep -n '"level": 40' backend/logs/app.log`.
+- follow-up: If duplicate diagnostics are needed in production telemetry, add a dedicated frontend event for duplicate-prevented creates and dashboard it separately from backend warnings.
+
 ## 2026-05-23 | branch `main` | commit `pending` | add backend app API tests
 
 - status: implemented

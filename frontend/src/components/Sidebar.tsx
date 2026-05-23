@@ -33,7 +33,7 @@ export function Sidebar() {
 
       <AddLocationForm />
 
-      <div className="flex flex-col gap-2 overflow-y-auto pr-1">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1">
         {isLoading && locations.length === 0 ? (
           <p className="rounded-2xl border border-white/10 bg-white/[0.06] p-4 text-sm text-white/70">
             Loading locations…
