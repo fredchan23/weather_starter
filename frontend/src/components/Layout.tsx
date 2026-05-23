@@ -4,7 +4,7 @@ import { ThemeSelector } from './ThemeSelector';
 
 export function Layout() {
   return (
-    <div className="relative flex h-full min-h-screen w-full">
+    <div className="relative flex h-screen w-full overflow-hidden">
       <Sidebar />
       <Hero />
       <div className="fixed right-4 top-4 z-50">
