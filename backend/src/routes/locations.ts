@@ -120,7 +120,7 @@ export function createLocationsRouter(
     }
   });
 
-  router.get('/locations/forecast-areas', async (_request, response, next) => {
+  router.get('/locations/forecast-areas', async (_request, response, _next) => {
     try {
       const now = Date.now();
       if (forecastAreasCache && forecastAreasCache.expiresAt > now) {

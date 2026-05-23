@@ -1,0 +1,163 @@
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import type { Server } from 'node:http';
+import request from 'supertest';
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import type { WeatherSnapshot } from './weather.js';
+
+const weather: WeatherSnapshot = {
+  condition: 'Cloudy',
+  observed_at: '2026-05-04T00:00:00Z',
+  source: 'test',
+  area: 'Bishan',
+  valid_period_text: 'Now',
+  temperature_c: 29,
+  humidity_percent: 80,
+  rainfall_mm: 0,
+  wind_speed_knots: 4,
+  wind_direction_degrees: 180,
+  forecast_low_c: 25,
+  forecast_high_c: 32,
+  uv_index: 7,
+  psi_twenty_four_hourly: 42,
+  pm25_one_hourly: 9,
+  air_quality_region: 'central',
+  forecast_periods: [{ label: 'Now', forecast: 'Cloudy' }],
+  daily_forecast: [
+    {
+      date: '2026-05-04',
+      forecast: 'Cloudy',
+      temperature_low_c: 25,
+      temperature_high_c: 32,
+    },
+  ],
+};
+
+describe('app API', () => {
+  let tempDir: string;
+  let app: Awaited<ReturnType<typeof import('./server.js')['createApp']>>['app'];
+  let server: Server;
+  let resetStore: () => Promise<void> = async () => {};
+  let previousDatabasePath: string | undefined;
+  let previousLogLevel: string | undefined;
+
+  beforeAll(async () => {
+    tempDir = await mkdtemp(join(tmpdir(), 'weather-starter-app-test-'));
+    previousDatabasePath = process.env.DATABASE_PATH;
+    previousLogLevel = process.env.LOG_LEVEL;
+    process.env.DATABASE_PATH = join(tempDir, 'weather.db');
+    process.env.LOG_LEVEL = 'silent';
+
+    const db = await import('./db.js');
+    resetStore = db.resetStore;
+
+    const { createApp } = await import('./server.js');
+    const created = await createApp({
+      serveFrontend: false,
+      enableRequestLogging: false,
+      weatherClient: {
+        async getCurrentWeather() {
+          return weather;
+        },
+        async getForecastAreas() {
+          return [
+            { name: 'Bishan', latitude: 1.351, longitude: 103.839 },
+            { name: 'Woodlands', latitude: 1.435, longitude: 103.786 },
+          ];
+        },
+      },
+    });
+
+    app = created.app;
+    server = created.server;
+  });
+
+  beforeEach(async () => {
+    await resetStore();
+  });
+
+  afterAll(async () => {
+    if (server.listening) {
+      await new Promise<void>((resolve, reject) => {
+        server.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve();
+        });
+      });
+    }
+    await rm(tempDir, { recursive: true, force: true });
+
+    if (previousDatabasePath === undefined) {
+      delete process.env.DATABASE_PATH;
+    } else {
+      process.env.DATABASE_PATH = previousDatabasePath;
+    }
+
+    if (previousLogLevel === undefined) {
+      delete process.env.LOG_LEVEL;
+    } else {
+      process.env.LOG_LEVEL = previousLogLevel;
+    }
+  });
+
+  it('returns healthy status from /health', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({ status: 'healthy' });
+  });
+
+  it('validates /api/logs event payload', async () => {
+    const response = await request(app).post('/api/logs').send({});
+
+    expect(response.status).toBe(422);
+    expect(response.body).toEqual({ detail: 'event is required' });
+  });
+
+  it('accepts valid frontend events in /api/logs', async () => {
+    const response = await request(app).post('/api/logs').send({
+      event: 'location.add_click',
+      metadata: { source: 'sidebar' },
+      page: '/dashboard',
+    });
+
+    expect(response.status).toBe(204);
+    expect(response.text).toBe('');
+  });
+
+  it('serves mounted location APIs through /api', async () => {
+    const createResponse = await request(app).post('/api/locations').send({
+      latitude: 1.35,
+      longitude: 103.85,
+    });
+
+    expect(createResponse.status).toBe(201);
+    expect(createResponse.body).toMatchObject({
+      id: expect.any(Number),
+      latitude: 1.35,
+      longitude: 103.85,
+      weather: {
+        condition: 'Cloudy',
+        area: 'Bishan',
+        temperature_c: 29,
+      },
+    });
+
+    const listResponse = await request(app).get('/api/locations');
+
+    expect(listResponse.status).toBe(200);
+    expect(listResponse.body).toMatchObject({
+      locations: [
+        expect.objectContaining({
+          id: createResponse.body.id,
+          latitude: 1.35,
+          longitude: 103.85,
+        }),
+      ],
+    });
+  });
+});

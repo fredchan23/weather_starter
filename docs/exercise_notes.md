@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-23 | branch `main` | commit `pending` | add backend app API tests
+
+- status: implemented
+- implementation request: Add Vitest coverage for backend API endpoints using existing route test patterns, then run lint and tests.
+- implementation challenges:
+  - Existing route tests validate router handlers directly, so app-level API verification needed separate HTTP-style assertions without introducing flaky server lifecycle behavior.
+  - The new app tests required isolated SQLite state to avoid cross-test interference with the existing backend suite.
+- scope: `backend/src/server.test.ts`, `backend/src/routes/locations.ts`.
+- decisions: Added a new `createApp` test suite with `supertest` covering `/health`, `/api/logs`, and mounted `/api/locations`; fixed an unused route middleware arg to satisfy ESLint.
+- risks: App-level tests intentionally avoid Vite/frontend middleware paths (`serveFrontend: false`), so frontend serving behavior remains covered by runtime smoke checks rather than unit tests.
+- verification: `npm run lint`, `npm test`.
+- follow-up: Optionally add focused tests for the shared error handler and non-2xx weather provider paths through the full app layer.
+
 ## 2026-05-23 | branch `main` | commit `pending` | fix manual coordinate input overlap
 
 - status: implemented
