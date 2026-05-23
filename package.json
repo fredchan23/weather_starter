@@ -6,6 +6,7 @@
   "scripts": {
     "prepare": "husky",
     "dev": "node scripts/dev.mjs",
+    "docs": "npm run dev --prefix docs-site",
     "format": "prettier --write .",
     "lint": "eslint \"backend/**/*.{ts,tsx}\" \"frontend/**/*.{ts,tsx}\"",
     "build": "npm run build -w frontend && tsc -p backend/tsconfig.json",

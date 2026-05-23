@@ -1,0 +1,62 @@
+---
+title: Development
+description: Local setup, commands, environment variables, and verification.
+---
+
+# Development
+
+## Local Commands
+
+Run from the workspace root:
+
+```bash
+npm install
+npm run dev
+```
+
+Common tasks:
+
+```bash
+npm test
+npm run build
+npm run doctor
+npm run reset
+npm run db:generate
+npm run db:migrate
+```
+
+## Runtime Notes
+
+- Development serves on `http://weather-starter.localhost:1355` through Portless.
+- Backend and frontend are served by one process in dev mode.
+- Frontend always calls relative `/api` paths.
+
+## Environment Variables
+
+- `PORT`: server port for direct server execution
+- `DATABASE_PATH`: override SQLite file path (default `backend/weather.db`)
+- `WEATHER_API_KEY`: optional key added as `x-api-key` for upstream API calls
+- `LOG_LEVEL`: logger level used by pino
+- `NODE_ENV`: controls frontend serving mode and logging defaults
+
+## Docs Site Commands
+
+Run from `docs-site`:
+
+```bash
+npm install
+npm run dev
+npm run build
+```
+
+## Testing Coverage Highlights
+
+Current backend tests verify:
+
+- route contracts and status codes
+- location creation/deletion/refresh behavior
+- coordinate validation and duplicate rejection
+- forecast-area caching and stale fallback
+- weather-client snapshot composition across upstream endpoints
+
+The frontend currently relies on runtime behavior checks and integration through the live app flow.

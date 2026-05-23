@@ -1,0 +1,39 @@
+---
+title: Home
+description: Weather Starter documentation for architecture, backend API, frontend flow, and data model.
+---
+
+# Weather Starter
+
+Weather Starter is a Singapore-focused weather tracker built with:
+
+- Node + Express backend
+- React + Vite frontend
+- SQLite persistence through Drizzle ORM
+- data.gov.sg weather feeds as the upstream source
+
+Use this documentation to understand how the app is wired today.
+
+## System At A Glance
+
+```mermaid
+flowchart LR
+    Browser[Browser]
+    Frontend[React SPA via Vite]
+    API[Express API]
+    DB[(SQLite weather.db)]
+    DGS[data.gov.sg APIs]
+
+    Browser --> Frontend
+    Frontend --> API
+    API --> DB
+    API --> DGS
+```
+
+## Docs Map
+
+- [Architecture](./architecture/) explains runtime topology and request flow.
+- [Backend API](./backend-api/) documents routes, validation, and update behavior.
+- [Frontend](./frontend/) describes state management, UI composition, and user interactions.
+- [Data Model](./data-model/) documents persisted schema and weather snapshot shape.
+- [Development](./development/) covers commands, environment variables, and verification workflow.

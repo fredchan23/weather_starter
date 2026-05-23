@@ -1,0 +1,76 @@
+---
+title: Data Model
+description: SQLite schema and weather snapshot fields persisted by the backend.
+---
+
+# Data Model
+
+Persistence uses SQLite with Drizzle ORM. Schema is defined in `backend/src/schema.ts` and mapped in `backend/src/db.ts`.
+
+## Table: locations
+
+Primary fields:
+
+- `id` integer primary key (auto increment)
+- `latitude` real not null
+- `longitude` real not null
+- `created_at` text not null
+
+A unique index enforces one row per normalized coordinate pair:
+
+- `locations_latitude_longitude_unique (latitude, longitude)`
+
+## Weather Snapshot Columns
+
+The row stores a denormalized weather snapshot:
+
+- condition + provenance: `condition`, `observed_at`, `source`, `area`, `valid_period_text`
+- current readings: `temperature_c`, `humidity_percent`, `rainfall_mm`
+- wind readings: `wind_speed_knots`, `wind_direction_degrees`
+- forecast summary: `forecast_low_c`, `forecast_high_c`, `forecast_periods`
+- environment and air quality: `uv_index`, `psi_twenty_four_hourly`, `pm25_one_hourly`, `air_quality_region`
+- daily outlook: `daily_forecast`
+
+`forecast_periods` and `daily_forecast` are stored as JSON text columns.
+
+## Record Shape Returned To Frontend
+
+API responses map database rows into this object shape:
+
+```json
+{
+  "id": 1,
+  "latitude": 1.35,
+  "longitude": 103.85,
+  "created_at": "2026-05-23T09:12:11",
+  "weather": {
+    "condition": "Cloudy",
+    "observed_at": "2026-05-23T09:10:00Z",
+    "source": "api-open.data.gov.sg",
+    "area": "Bishan",
+    "valid_period_text": "Now till noon",
+    "temperature_c": 29.4,
+    "humidity_percent": 80,
+    "rainfall_mm": 0,
+    "wind_speed_knots": 4,
+    "wind_direction_degrees": 180,
+    "forecast_low_c": 25,
+    "forecast_high_c": 32,
+    "uv_index": 7,
+    "psi_twenty_four_hourly": 42,
+    "pm25_one_hourly": 9,
+    "air_quality_region": "central",
+    "forecast_periods": [{ "label": "Morning", "forecast": "Cloudy" }],
+    "daily_forecast": [{ "date": "2026-05-24", "forecast": "Fair", "temperature_low_c": 25, "temperature_high_c": 32 }]
+  }
+}
+```
+
+## Defaults
+
+On initial location create (before successful refresh), weather defaults to:
+
+- `condition`: `Not refreshed`
+- `source`: `not-refreshed`
+- most numeric fields: `null`
+- list fields: empty arrays

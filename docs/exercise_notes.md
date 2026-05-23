@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-23 | branch `main` | commit `pending` | expand docs-site pages from source
+
+- status: implemented
+- implementation request: Read the existing backend and frontend source and fill in Weather Starter docs-site pages, including Mermaid diagrams for system architecture.
+- implementation challenges:
+  - The docs-site initially contained only a minimal home page, so the new content had to be derived directly from backend and frontend source files rather than existing docs structure.
+  - API and UI behavior include fallback paths (stale forecast areas, partial refresh merges, forecast-first rendering) that needed precise documentation to avoid misleading simplifications.
+- scope: `docs-site/src/content/docs/index.mdx`, `docs-site/src/content/docs/architecture.mdx`, `docs-site/src/content/docs/backend-api.mdx`, `docs-site/src/content/docs/frontend.mdx`, `docs-site/src/content/docs/data-model.mdx`, `docs-site/src/content/docs/development.mdx`, `docs/exercise_notes.md`.
+- decisions: Added dedicated docs pages for architecture, backend API, frontend behavior, data model, and development workflow; included Mermaid diagrams for runtime topology, request flow, and frontend composition.
+- risks: Docs can drift as routes or UI behavior evolve unless kept in sync with future implementation changes.
+- verification: `npm test`, `npm run build`, `cd docs-site && npm run build`.
+- follow-up: Optionally add endpoint-level request/response examples for every API route if external consumers need stricter contracts.
+
 ## 2026-05-23 | branch `main` | commit `pending` | document duplicate precheck logging behavior
 
 - status: implemented

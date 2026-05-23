@@ -1,0 +1,86 @@
+---
+title: Architecture
+description: Runtime architecture and end-to-end data flow.
+---
+
+# Architecture
+
+The application runs as a single Node process in development. Express handles API routes and mounts Vite middleware to serve the React app. The API persists location snapshots in SQLite and enriches weather data from data.gov.sg.
+
+## Runtime Topology
+
+```mermaid
+flowchart LR
+    subgraph Browser
+      UI[React UI]
+      Store[Store Context]
+    end
+
+    subgraph NodeProcess[Node Process]
+      Express[Express App]
+      Routes[/routes/locations.ts/]
+      WeatherClient[SingaporeWeatherClient]
+      DBLayer[/db.ts + Drizzle/]
+      Logs[/api/logs handler/]
+      Vite[Vite middleware]
+    end
+
+    SQLite[(backend/weather.db)]
+    OpenAPI[(api-open.data.gov.sg)]
+    LegacyAPI[(api.data.gov.sg)]
+
+    UI -->|fetch /api/*| Express
+    Store --> UI
+    Express --> Routes
+    Express --> Logs
+    Express --> Vite
+
+    Routes --> DBLayer
+    Routes --> WeatherClient
+    DBLayer --> SQLite
+
+    WeatherClient --> OpenAPI
+    WeatherClient --> LegacyAPI
+```
+
+## Request Flow: Add And Refresh
+
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant FE as Frontend (StoreProvider)
+    participant API as Express /api/locations
+    participant W as SingaporeWeatherClient
+    participant DB as SQLite
+
+    U->>FE: Submit location (manual or geolocation)
+    FE->>API: POST /api/locations { lat, lon }
+    API->>DB: Insert location with default weather
+    API->>W: getCurrentWeather(lat, lon)
+    W-->>API: Weather snapshot
+    API->>DB: Update weather columns
+    API-->>FE: 201 location
+    FE->>API: GET /api/locations
+    API->>DB: Read latest list
+    API-->>FE: { locations: [...] }
+
+    U->>FE: Click Refresh
+    FE->>API: POST /api/locations/:id/refresh
+    API->>W: getCurrentWeather(lat, lon)
+    W-->>API: Full or partial snapshot
+    API->>DB: Merge + persist weather
+    API-->>FE: Updated location
+```
+
+## Caching Notes
+
+- Forecast area metadata is cached in-memory in the backend router for 10 minutes.
+- The frontend also caches forecast areas for 10 minutes and deduplicates concurrent requests.
+- If upstream forecast-area fetch fails after a successful fetch, stale cached areas are served with `stale: true`.
+
+## Error Handling
+
+- Weather provider failures are mapped to `WeatherProviderError`.
+- Location refresh returns `502` for provider errors.
+- New location creation still returns `201` even if immediate refresh fails, so coordinates are not lost.
+- Unhandled request errors are logged and returned as `500` with `{ detail: "Internal server error" }`.

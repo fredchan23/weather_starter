@@ -1,0 +1,94 @@
+---
+title: Backend API
+description: Express routes, request validation rules, and response contracts.
+---
+
+# Backend API
+
+Backend entry point is `backend/src/server.ts`, with location routes mounted under `/api` from `backend/src/routes/locations.ts`.
+
+## Endpoints
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| GET | /health | Liveness probe |
+| POST | /api/logs | Frontend interaction logging |
+| GET | /api/locations | List saved locations |
+| POST | /api/locations | Create location and attempt immediate weather refresh |
+| GET | /api/locations/forecast-areas | Return Singapore forecast areas (with stale semantics) |
+| GET | /api/locations/:locationId | Fetch one location |
+| DELETE | /api/locations/:locationId | Delete one location |
+| POST | /api/locations/:locationId/refresh | Refresh weather snapshot |
+
+## Validation Rules
+
+### POST /api/locations
+
+- `latitude` and `longitude` must be numbers.
+- Coordinates must be within Singapore bounds:
+  - latitude: 1.1 to 1.5
+  - longitude: 103.6 to 104.1
+- Coordinates are normalized to 4 decimal places before persistence.
+- Duplicate normalized coordinates return `409`.
+
+### POST /api/logs
+
+- `event` must be a string matching `^[a-z][a-z0-9_.:-]{1,63}$`.
+- Invalid payload returns `422` with `{ detail: "event is required" }`.
+- Valid payload returns `204`.
+
+## Snapshot Behavior
+
+### Create Flow
+
+1. Insert location with default weather (`Not refreshed`).
+2. Attempt weather fetch from upstream provider.
+3. If refresh succeeds, persist full weather fields and return updated record.
+4. If refresh fails with provider error, still return `201` with the created location.
+
+### Refresh Flow
+
+- `POST /api/locations/:locationId/refresh` fetches fresh weather and merges with existing fields.
+- If new data has `condition: "Unavailable"`, previous forecast values are retained where possible.
+- Missing location returns `404`.
+- Upstream provider failure returns `502`.
+
+## Forecast Areas Contract
+
+`GET /api/locations/forecast-areas`
+
+Response:
+
+```json
+{
+  "areas": [
+    { "name": "Bishan", "latitude": 1.351, "longitude": 103.839 }
+  ],
+  "fetched_at": "2026-05-23T10:00:00.000Z",
+  "stale": false
+}
+```
+
+Semantics:
+
+- Cache TTL is 10 minutes by default.
+- If fetch fails and cache exists, response is `200` with `stale: true`.
+- If fetch fails and cache is empty, response is `502`.
+
+## Upstream Weather Sources
+
+The weather client composes a snapshot from multiple endpoints:
+
+- `v2/real-time/api/two-hr-forecast`
+- `v2/real-time/api/air-temperature`
+- `v2/real-time/api/relative-humidity`
+- `v2/real-time/api/rainfall`
+- `v2/real-time/api/wind-speed`
+- `v2/real-time/api/wind-direction`
+- `v2/real-time/api/uv`
+- `v2/real-time/api/psi`
+- `v2/real-time/api/pm25`
+- `v2/real-time/api/twenty-four-hr-forecast`
+- `v1/environment/4-day-weather-forecast`
+
+Provider timeouts default to 8000ms and non-2xx responses are translated into explicit provider errors.
