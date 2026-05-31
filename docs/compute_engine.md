@@ -86,6 +86,8 @@ REPO_URL='<your-git-repo-url>' npm run gcp:vm:bootstrap
 
 The bootstrap script installs Node + Caddy, clones or updates the repo, runs the build, installs a `systemd` service, and configures Caddy.
 
+If you see `debconf` frontend warnings during package installation over SSH, those are usually non-fatal in non-interactive terminals. Treat the run as failed only when a command exits with a hard error (for example `Permission denied` on filesystem operations).
+
 Environment variables you can override for bootstrap:
 
 - `PROJECT_ID` (default `automatic-ace-488412-a7`)
@@ -98,6 +100,8 @@ Environment variables you can override for bootstrap:
 - `PORT` (default `3000`)
 - `HOST` (default `127.0.0.1`)
 - `DOMAIN` (optional, for HTTPS with Caddy)
+
+If a bootstrap attempt fails part-way, fix the cause and rerun the same command. The script is designed to be rerunnable.
 
 SSH into the VM:
 

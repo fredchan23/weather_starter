@@ -34,6 +34,8 @@ gcloud compute instances describe "${INSTANCE_NAME}" \
 REMOTE_CMD="
 set -euo pipefail
 
+export DEBIAN_FRONTEND=noninteractive
+
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl gnupg git caddy
 
@@ -51,7 +53,9 @@ if [[ -d '${APP_DIR}/.git' ]]; then
   git -C '${APP_DIR}' checkout '${BRANCH}'
   git -C '${APP_DIR}' pull --ff-only origin '${BRANCH}'
 else
-  rm -rf '${APP_DIR}'
+  sudo rm -rf '${APP_DIR}'
+  sudo mkdir -p '${APP_DIR}'
+  sudo chown -R \"\$USER\":\"\$USER\" '${APP_DIR}'
   git clone --branch '${BRANCH}' '${REPO_URL}' '${APP_DIR}'
 fi
 
