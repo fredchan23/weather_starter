@@ -25,9 +25,9 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
 
   return (
     <aside
-      className={`fixed inset-y-0 left-0 z-50 flex h-full w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col gap-3 border-r border-white/10 bg-black/40 p-4 backdrop-blur-2xl transition-transform duration-200 ease-out lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:border-white/5 lg:bg-black/20 ${isOpen
-          ? 'visible translate-x-0 pointer-events-auto'
-          : 'invisible -translate-x-[calc(100%+1rem)] pointer-events-none lg:visible lg:pointer-events-auto'
+      className={`fixed inset-y-0 left-0 z-[1100] flex h-full w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col gap-3 border-r border-white/10 bg-black/40 p-4 backdrop-blur-2xl transition-transform duration-200 ease-out lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:border-white/5 lg:bg-black/20 ${isOpen
+        ? 'visible translate-x-0 pointer-events-auto'
+        : 'invisible -translate-x-[calc(100%+1rem)] pointer-events-none lg:visible lg:pointer-events-auto'
         }`}
     >
       <div className="flex items-center justify-between gap-3 lg:hidden">
