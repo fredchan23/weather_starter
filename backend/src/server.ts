@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
+import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import pinoHttpModule from 'pino-http';
 import { createServer as createHttpServer } from 'node:http';
@@ -31,6 +32,14 @@ export async function createApp(options: AppOptions = {}) {
     options.enableRequestLogging ?? process.env.NODE_ENV !== 'test';
 
   app.use(helmet());
+
+  const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  if (allowedOrigins.length > 0) {
+    app.use('/api', cors({ origin: allowedOrigins, credentials: true }));
+  }
 
   // General API limit: 120 req/min per IP
   const apiLimiter = rateLimit({

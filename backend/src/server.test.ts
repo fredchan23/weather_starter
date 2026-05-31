@@ -185,6 +185,43 @@ describe('app API', () => {
     expect(response.status).toBe(422);
   });
 
+  it('does not echo back arbitrary origins in CORS headers', async () => {
+    const response = await request(app)
+      .get('/api/locations')
+      .set('Origin', 'https://evil.example.com');
+
+    expect(response.headers['access-control-allow-origin']).not.toBe(
+      'https://evil.example.com',
+    );
+  });
+
+  it('allows requests from ALLOWED_ORIGINS when set', async () => {
+    const previousAllowed = process.env.ALLOWED_ORIGINS;
+    process.env.ALLOWED_ORIGINS = 'https://trusted.example.com';
+    try {
+      const { createApp: makeApp } = await import('./server.js');
+      const { app: appWithCors } = await makeApp({
+        serveFrontend: false,
+        enableRequestLogging: false,
+        weatherClient: {
+          async getCurrentWeather() { throw new Error('not used'); },
+          async getForecastAreas() { return []; },
+        },
+      });
+
+      const response = await request(appWithCors)
+        .get('/api/locations')
+        .set('Origin', 'https://trusted.example.com');
+
+      expect(response.headers['access-control-allow-origin']).toBe(
+        'https://trusted.example.com',
+      );
+    } finally {
+      if (previousAllowed === undefined) delete process.env.ALLOWED_ORIGINS;
+      else process.env.ALLOWED_ORIGINS = previousAllowed;
+    }
+  });
+
   it('rejects non-integer locationId with 422 on GET', async () => {
     const responses = await Promise.all([
       request(app).get('/api/locations/abc'),
