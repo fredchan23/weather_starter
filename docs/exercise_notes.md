@@ -4,6 +4,45 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-31 | branch `main` | commit `pending` | document Caddy domain and HTTPS setup
+
+- status: implemented
+- implementation request: Document the deployed Caddy reverse-proxy, domain, and HTTPS setup in `docs`.
+- implementation challenges:
+  - Needed to capture both the current working sslip domain flow and a reusable custom-domain path without overfitting to one hostname.
+  - Had to include practical troubleshooting for transient upstream failures (`502` when app is not listening) and certificate issuance pitfalls.
+- scope: `docs/caddy_setup.md`, `docs/compute_engine.md`, `docs/exercise_notes.md`.
+- decisions: Added a dedicated Caddy guide with validated command sequence, verification checks, and troubleshooting; linked it from the Compute Engine deployment doc.
+- risks: The documented sslip hostname is tied to current external IP and will change if the VM IP changes.
+- verification: External checks passed for HTTP redirect and HTTPS health/root responses on `34-60-122-241.sslip.io`.
+- follow-up: Optionally assign a static external IP and move to a custom domain to avoid hostname drift.
+
+## 2026-05-31 | branch `main` | commit `pending` | add VM SSH/npm recovery RCA document
+
+- status: implemented
+- implementation request: Document full root-cause analysis and recovery actions for the GCE VM SSH instability and npm install failures in `docs`.
+- implementation challenges:
+  - The incident combined multiple coupled symptoms (SSH banner timeout, connection refused, npm `ENOTEMPTY`, and service restart churn), which required one coherent RCA rather than isolated notes.
+  - Control-plane troubleshooting looked healthy while guest-level behavior was unstable, so the document had to separate confirmed facts from unproven low-level causes.
+- scope: `docs/rca-2026-05-31-gce-vm-ssh-npm-recovery.md`, `docs/exercise_notes.md`.
+- decisions: Created a dedicated RCA with timeline, root cause/contributing factors, recovery steps, final state, and preventive runbook snippets.
+- risks: The initial SSH degradation trigger remains partially indeterminate; future recurrences should capture richer guest logs at onset.
+- verification: Confirmed recovered state with successful `npm ci`, successful `npm run build`, active `weather-starter.service`, and healthy `curl http://127.0.0.1:3000/health` response.
+- follow-up: Optionally codify maintenance-mode deploy sequencing in scripts to stop service before install/build and start only after health checks pass.
+
+## 2026-05-31 | branch `main` | commit `pending` | document SSH recovery incident as ADR
+
+- status: implemented
+- implementation request: Document the full Compute Engine SSH troubleshooting and recovery flow as an ADR under `docs`.
+- implementation challenges:
+  - The incident had multiple symptoms (`banner exchange timeout` then `connection refused`) that needed to be captured as a coherent sequence.
+  - The control-plane troubleshoot command reported no issues, so the ADR needed to explicitly distinguish path checks from guest `sshd` health.
+- scope: `docs/adr-2026-05-31-ssh-access-recovery-gce-vm.md`, `docs/exercise_notes.md`.
+- decisions: Use an incident-focused ADR format with context, timeline, decision, recovery implementation, outcome, and follow-up actions.
+- risks: The exact underlying trigger for `sshd` degradation remains unproven; the ADR records this as an open risk rather than claiming a definitive cause.
+- verification: Confirmed SSH recovery and persistence using `gcloud compute ssh weather-starter-vm --zone us-central1-a --project automatic-ace-488412-a7 --command 'echo SSH_STILL_OK'`.
+- follow-up: Add periodic VM runbook checks for `systemctl is-active ssh` and capture richer guest logs if the issue reappears.
+
 ## 2026-05-31 | branch `main` | commit `pending` | add Compute Engine script workflow
 
 - status: implemented

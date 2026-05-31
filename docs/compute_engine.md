@@ -159,6 +159,8 @@ sudo systemctl status weather-starter
 
 ## Caddy Reverse Proxy
 
+Detailed setup, domain, HTTPS, and troubleshooting steps are documented in `docs/caddy_setup.md`.
+
 For an external IP only, a minimal Caddy config can listen on port 80. For a real domain, replace `your-domain.example` in `ops/caddy/Caddyfile.example` and install it:
 
 ```bash

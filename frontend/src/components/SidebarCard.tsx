@@ -29,7 +29,6 @@ export function SidebarCard({
   const rainfall = formatNumber(location.weather.rainfall_mm, 1);
   const temperatureDisplay =
     temperature === '--°' ? temperature : `${temperature}C`;
-  const hasTemperature = location.weather.temperature_c !== null;
   const hasHighLow =
     location.weather.forecast_high_c !== null ||
     location.weather.forecast_low_c !== null;
@@ -56,8 +55,8 @@ export function SidebarCard({
       onKeyDown={onKeyDown}
       aria-pressed={isSelected}
       className={`relative w-full cursor-pointer overflow-hidden rounded-2xl border text-left backdrop-blur-xl transition ${isSelected
-          ? 'border-white/30 bg-white/20 shadow-lg shadow-black/20'
-          : 'border-white/10 bg-white/[0.07] hover:bg-white/[0.12]'
+        ? 'border-white/30 bg-white/20 shadow-lg shadow-black/20'
+        : 'border-white/10 bg-white/[0.07] hover:bg-white/[0.12]'
         }`}
     >
       <button
@@ -94,10 +93,10 @@ export function SidebarCard({
         </div>
         <div className="flex flex-col items-end leading-none text-right">
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/50">
-            {hasTemperature ? 'Temperature' : 'Source'}
+            Temperature
           </span>
           <span className="text-3xl font-medium tabular-nums text-white/95">
-            {hasTemperature ? temperatureDisplay : '2-hr'}
+            {temperatureDisplay}
           </span>
         </div>
       </div>
