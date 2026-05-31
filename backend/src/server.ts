@@ -77,7 +77,7 @@ export async function createApp(options: AppOptions = {}) {
     if (process.env.NODE_ENV === 'production') {
       const staticPath = resolve(__dirname, '..', '..', 'frontend', 'dist');
       app.use(express.static(staticPath));
-      app.get('*', (_request, response) => {
+      app.get('/', (_request, response) => {
         response.sendFile(resolve(staticPath, 'index.html'));
       });
     } else {
