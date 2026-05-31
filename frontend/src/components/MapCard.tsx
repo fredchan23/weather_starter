@@ -102,10 +102,7 @@ export function MapCard() {
   return (
     <>
       {/* Card mode */}
-      <div
-        className="overflow-hidden rounded-2xl border border-white/15 bg-white/[0.08]"
-        style={{ height: '240px' }}
-      >
+      <div className="h-52 overflow-hidden rounded-2xl border border-white/15 bg-white/[0.08] sm:h-60">
         <div className="relative h-full w-full">
           {isExpanded ? (
             // Placeholder while modal is open — keeps layout stable

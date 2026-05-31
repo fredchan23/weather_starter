@@ -240,7 +240,7 @@ export function AddLocationForm() {
             aria-describedby={status ? statusId : undefined}
             className="grid gap-2.5 rounded-2xl border border-white/15 bg-white/[0.1] p-3 backdrop-blur-xl"
         >
-            <div className="flex items-start justify-between gap-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                 <div>
                     <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
                         Manual coordinates
@@ -253,7 +253,7 @@ export function AddLocationForm() {
                     type="button"
                     onClick={handleUseMyLocation}
                     disabled={busyAction !== null}
-                    className="rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white/80 transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="w-full rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white/80 transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
                 >
                     Use my location
                 </button>
@@ -284,7 +284,7 @@ export function AddLocationForm() {
                     />
                 </label>
             </div>
-            <div className="flex items-center justify-end gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-2">
                 <button
                     type="button"
                     onClick={cancelManual}

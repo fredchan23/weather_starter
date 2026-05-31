@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-31 | branch `main` | commit `pending` | improve mobile dashboard responsiveness
+
+- status: implemented
+- implementation request: Enhance the existing weather site so the dashboard is mobile responsive instead of remaining desktop-first.
+- implementation challenges:
+  - The root layout hard-locked the viewport with a fixed sidebar and internal scrolling, so the first fix had to be at the shell level rather than inside individual cards.
+  - Several dashboard sections assumed wide rows or oversized typography, so the mobile pass needed coordinated changes across the Hero, hourly strip, ten-day forecast, map card, and sidebar controls without regressing desktop.
+- scope: `frontend/src/components/Layout.tsx`, `frontend/src/components/Sidebar.tsx`, `frontend/src/components/SidebarCard.tsx`, `frontend/src/components/Hero.tsx`, `frontend/src/components/Tiles.tsx`, `frontend/src/components/HourlyStrip.tsx`, `frontend/src/components/TenDayForecast.tsx`, `frontend/src/components/MapCard.tsx`, `frontend/src/components/AddLocationForm.tsx`, `frontend/src/components/icons.tsx`, `docs/exercise_notes.md`.
+- decisions: Replaced the always-visible fixed sidebar with a mobile drawer plus top bar, scaled the hero and dashboard grids mobile-first, made dense forecast sections adapt instead of forcing the desktop layout onto phones, and hid the closed mobile drawer via classes instead of desktop-hostile ARIA state.
+- risks: There is still no automated frontend visual regression coverage, so future dashboard layout changes can regress phone behavior unless they are checked in a browser at small widths.
+- verification: `npm run build`, `npm test`, `agent-browser --session weather-mobile batch --bail "open http://weather-starter.localhost:1355" "set viewport 390 844" "wait 1500" "snapshot -i -c" "screenshot /home/fredc/codeforfun/weather_starter/frontend-mobile-390.png"`, `agent-browser --session weather-mobile batch --bail "click @e2" "wait 500" "snapshot -i -c" "screenshot /home/fredc/codeforfun/weather_starter/frontend-mobile-drawer.png"`, `agent-browser --session weather-mobile batch --bail "click @e4" "wait 300" "scroll down 850" "wait 500" "screenshot /home/fredc/codeforfun/weather_starter/frontend-mobile-lower.png"`.
+- follow-up: Optionally add frontend viewport or visual-regression coverage if responsive layout changes will continue frequently.
+
 ## 2026-05-31 | branch `main` | commit `pending` | add docs-site SOP init guide
 
 - status: implemented

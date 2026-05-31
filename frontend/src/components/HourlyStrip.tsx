@@ -36,33 +36,35 @@ export function HourlyStrip({ periods = [] }: HourlyStripProps) {
       <p className="border-b border-white/10 px-4 py-2 text-[12px] text-white/85">
         24-hour area forecast.
       </p>
-      <div
-        className="grid divide-x divide-white/5"
-        style={{
-          gridTemplateColumns: `repeat(${slots.length}, minmax(0, 1fr))`,
-        }}
-      >
-        {slots.map((slot) => {
-          const isFair = slot.forecast?.toLowerCase().includes('fair');
-          return (
-            <div
-              key={slot.key}
-              className="flex flex-col items-center gap-2 px-2 py-4 text-center"
-            >
-              <div className="text-xs font-medium text-white/85">
-                {slot.label}
+      <div className="overflow-x-auto">
+        <div
+          className="grid min-w-full divide-x divide-white/5"
+          style={{
+            gridTemplateColumns: `repeat(${slots.length}, minmax(5.75rem, 1fr))`,
+          }}
+        >
+          {slots.map((slot) => {
+            const isFair = slot.forecast?.toLowerCase().includes('fair');
+            return (
+              <div
+                key={slot.key}
+                className="flex min-w-[5.75rem] flex-col items-center gap-2 px-2 py-4 text-center"
+              >
+                <div className="text-xs font-medium text-white/85">
+                  {slot.label}
+                </div>
+                {isFair ? (
+                  <SunIcon className="h-7 w-7 text-amber-300" />
+                ) : (
+                  <CloudIcon className="h-7 w-7 text-white/85" />
+                )}
+                <div className="text-xs leading-snug text-white/90">
+                  {slot.forecast}
+                </div>
               </div>
-              {isFair ? (
-                <SunIcon className="h-7 w-7 text-amber-300" />
-              ) : (
-                <CloudIcon className="h-7 w-7 text-white/85" />
-              )}
-              <div className="text-xs leading-snug text-white/90">
-                {slot.forecast}
-              </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </section>
   );

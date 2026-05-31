@@ -13,14 +13,14 @@ export function Hero() {
 
   if (!selected) {
     return (
-      <main className="flex flex-1 flex-col p-10">
-        <div className="flex flex-1 flex-col items-center justify-center gap-6">
+      <main className="flex min-w-0 flex-1 flex-col px-4 pb-8 pt-4 sm:px-6 sm:pb-10 lg:px-10 lg:py-10">
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 sm:gap-6">
           <div className="text-center">
-            <p className="text-2xl font-light text-white/85">
+            <p className="text-xl font-light text-white/85 sm:text-2xl">
               Select a location
             </p>
             <p className="mt-2 text-sm text-white/60">
-              Add a Singapore coordinate from the sidebar to see its weather.
+              Add a Singapore coordinate from the locations panel to see its weather.
             </p>
           </div>
           <div className="w-full max-w-5xl">
@@ -67,24 +67,26 @@ export function Hero() {
     selected.weather?.forecast_high_c !== null;
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="mx-auto flex max-w-5xl flex-col gap-3 p-6 lg:p-8">
-        <header className="flex flex-col items-center pt-6 pb-2 text-center">
+    <main className="min-w-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 pb-6 pt-3 sm:px-6 sm:pb-8 sm:pt-4 lg:gap-4 lg:p-8">
+        <header className="flex flex-col items-center px-2 pb-2 pt-2 text-center sm:px-4 sm:pt-6">
           {isHome && (
             <div className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">
               <LocationIcon className="h-3 w-3" />
               <span>Home</span>
             </div>
           )}
-          <h1 className="text-4xl font-light leading-tight text-white">
+          <h1 className="text-3xl font-light leading-tight text-white sm:text-4xl lg:text-5xl">
             {area}
           </h1>
           {hasTemperature ? (
             <>
-              <div className="mt-2 text-[6.5rem] font-extralight leading-none tracking-tight text-white">
+              <div className="mt-2 text-[4.25rem] font-extralight leading-none tracking-tight text-white sm:text-[5.25rem] lg:text-[6.5rem]">
                 {temperature}
               </div>
-              <div className="mt-1 text-lg text-white/90">{condition}</div>
+              <div className="mt-1 text-base text-white/90 sm:text-lg">
+                {condition}
+              </div>
               <div className="mt-1 text-sm text-white/65">{todayLabel}</div>
               {hasHighLow && (
                 <div className="mt-1 text-sm text-white/70 tabular-nums">
@@ -97,7 +99,7 @@ export function Hero() {
               <div className="mt-4 rounded-full border border-white/15 bg-white/[0.08] px-4 py-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/65">
                 Two-hour forecast
               </div>
-              <div className="mt-4 text-5xl font-light leading-tight text-white">
+              <div className="mt-4 text-3xl font-light leading-tight text-white sm:text-4xl lg:text-5xl">
                 {condition}
               </div>
               <div className="mt-2 text-sm text-white/65">{todayLabel}</div>
@@ -119,7 +121,7 @@ export function Hero() {
         {hasDailyForecast && <TenDayForecast weather={selected.weather} />}
         {hasSupplementaryTiles && <TileGrid weather={selected.weather} />}
 
-        <footer className="mt-2 flex flex-col items-center gap-3 pb-8 text-xs text-white/55">
+        <footer className="mt-2 flex flex-col items-center gap-3 pb-6 text-center text-xs text-white/55 sm:pb-8">
           <button
             type="button"
             onClick={() => void refresh(selected.id)}

@@ -62,6 +62,14 @@ export function SearchIcon({ className = 'h-4 w-4' }: IconProps) {
   );
 }
 
+export function MenuIcon({ className = 'h-4 w-4' }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...base}>
+      <path d="M4 7h16M4 12h16M4 17h16" />
+    </svg>
+  );
+}
+
 export function RefreshIcon({ className = 'h-4 w-4' }: IconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...base}>

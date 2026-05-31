@@ -1,10 +1,15 @@
 import { useMemo, useState } from 'react';
 import { useStore } from '../state/store';
-import { SearchIcon } from './icons';
+import { CloseIcon, SearchIcon } from './icons';
 import { SidebarCard } from './SidebarCard';
 import { AddLocationForm } from './AddLocationForm';
 
-export function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { locations, isLoading } = useStore();
   const [query, setQuery] = useState('');
 
@@ -19,7 +24,29 @@ export function Sidebar() {
   }, [locations, query]);
 
   return (
-    <aside className="flex h-full w-[22rem] shrink-0 flex-col gap-3 border-r border-white/5 bg-black/20 p-4 backdrop-blur-2xl">
+    <aside
+      className={`fixed inset-y-0 left-0 z-50 flex h-full w-[22rem] max-w-[calc(100vw-1rem)] shrink-0 flex-col gap-3 border-r border-white/10 bg-black/40 p-4 backdrop-blur-2xl transition-transform duration-200 ease-out lg:static lg:z-auto lg:max-w-none lg:translate-x-0 lg:border-white/5 lg:bg-black/20 ${isOpen
+          ? 'visible translate-x-0 pointer-events-auto'
+          : 'invisible -translate-x-[calc(100%+1rem)] pointer-events-none lg:visible lg:pointer-events-auto'
+        }`}
+    >
+      <div className="flex items-center justify-between gap-3 lg:hidden">
+        <div>
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-white/55">
+            Locations
+          </p>
+          <p className="mt-1 text-sm text-white/75">Saved places and search</p>
+        </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close locations panel"
+          className="rounded-full border border-white/15 bg-white/[0.08] p-2 text-white/80 backdrop-blur-xl hover:bg-white/[0.14]"
+        >
+          <CloseIcon className="h-4 w-4" />
+        </button>
+      </div>
+
       <div className="relative">
         <SearchIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/50" />
         <input
@@ -52,6 +79,7 @@ export function Sidebar() {
               key={location.id}
               location={location}
               isHome={location.id === locations[0].id}
+              onSelectComplete={onClose}
             />
           ))
         )}

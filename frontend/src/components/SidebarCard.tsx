@@ -7,9 +7,14 @@ import type { Location } from '../types';
 interface SidebarCardProps {
   location: Location;
   isHome: boolean;
+  onSelectComplete?: () => void;
 }
 
-export function SidebarCard({ location, isHome }: SidebarCardProps) {
+export function SidebarCard({
+  location,
+  isHome,
+  onSelectComplete,
+}: SidebarCardProps) {
   const { selectedId, select, deleteLocation } = useStore();
   const isSelected = selectedId === location.id;
   const observed = formatTime(location.weather.observed_at);
@@ -32,7 +37,10 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
     location.weather.humidity_percent !== null ||
     location.weather.rainfall_mm !== null;
 
-  const onSelect = () => select(location.id);
+  const onSelect = () => {
+    select(location.id);
+    onSelectComplete?.();
+  };
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget) return;
     if (event.key === 'Enter' || event.key === ' ') {
@@ -47,11 +55,10 @@ export function SidebarCard({ location, isHome }: SidebarCardProps) {
       onClick={onSelect}
       onKeyDown={onKeyDown}
       aria-pressed={isSelected}
-      className={`relative w-full cursor-pointer overflow-hidden rounded-2xl border text-left backdrop-blur-xl transition ${
-        isSelected
+      className={`relative w-full cursor-pointer overflow-hidden rounded-2xl border text-left backdrop-blur-xl transition ${isSelected
           ? 'border-white/30 bg-white/20 shadow-lg shadow-black/20'
           : 'border-white/10 bg-white/[0.07] hover:bg-white/[0.12]'
-      }`}
+        }`}
     >
       <button
         type="button"
