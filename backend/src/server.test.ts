@@ -111,6 +111,14 @@ describe('app API', () => {
     expect(response.body).toEqual({ status: 'healthy' });
   });
 
+  it('sets security headers on every response', async () => {
+    const response = await request(app).get('/health');
+
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+    expect(response.headers['x-frame-options']).toBeTruthy();
+    expect(response.headers['referrer-policy']).toBeTruthy();
+  });
+
   it('validates /api/logs event payload', async () => {
     const response = await request(app).post('/api/logs').send({});
 

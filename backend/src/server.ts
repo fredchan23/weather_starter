@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import express from 'express';
+import helmet from 'helmet';
 import pinoHttpModule from 'pino-http';
 import { createServer as createHttpServer } from 'node:http';
 import { dirname, resolve } from 'node:path';
@@ -27,6 +28,8 @@ export async function createApp(options: AppOptions = {}) {
     options.serveFrontend ?? process.env.NODE_ENV !== 'test';
   const enableRequestLogging =
     options.enableRequestLogging ?? process.env.NODE_ENV !== 'test';
+
+  app.use(helmet());
 
   if (enableRequestLogging) {
     app.use(pinoHttp({ logger }));
