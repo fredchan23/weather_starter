@@ -84,6 +84,7 @@ Learning path with scripts:
 2. Run `REPO_URL='<your-git-repo-url>' npm run gcp:vm:bootstrap`.
 3. Confirm health with the VM external IP.
 4. Use `npm run gcp:vm:redeploy` for each code update.
+5. If you want push-on-commit deployment, enable the GitHub Actions workflow documented in `docs/compute_engine.md`.
 
 ## API
 

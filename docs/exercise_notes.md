@@ -17,6 +17,19 @@ Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 - verification: External checks passed for HTTP redirect and HTTPS health/root responses on `34-60-122-241.sslip.io`.
 - follow-up: Optionally assign a static external IP and move to a custom domain to avoid hostname drift.
 
+## 2026-05-31 | branch `main` | commit `pending` | add GitHub Actions VM deploy workflow
+
+- status: implemented
+- implementation request: Add a push-on-`main` GitHub Actions deploy path for the GCE VM so routine fixes can ship without manual `gcloud compute ssh` deploys.
+- implementation challenges:
+  - The VM deploy path needed to avoid the interactive `gcloud` SSH key generation prompt, so the workflow had to use a dedicated SSH deploy key instead of the gcloud-managed keypair.
+  - The deployment should stay compatible with the existing SQLite data on the VM, which meant syncing source code without overwriting the database or runtime logs.
+- scope: `.github/workflows/deploy-vm.yml`, `docs/compute_engine.md`, `README.md`, `docs/exercise_notes.md`.
+- decisions: Added a GitHub Actions workflow triggered on push to `main` that syncs the checked-out source to the VM over SSH, rebuilds there, restarts the service, and health-checks the local app before reporting success.
+- risks: The workflow assumes the VM user has SSH access and can run the restart commands with `sudo`; if that changes, the workflow or VM sudoers config will need to be updated.
+- verification: `npm test`, `npm run build`.
+- follow-up: Optionally add a manual `workflow_dispatch` input for alternate branches or a status badge once the deploy path is in regular use.
+
 ## 2026-05-31 | branch `main` | commit `pending` | add VM SSH/npm recovery RCA document
 
 - status: implemented

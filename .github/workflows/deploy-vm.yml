@@ -1,0 +1,80 @@
+name: Deploy to GCP VM
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-weather-starter-main
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    env:
+      VM_HOST: ${{ secrets.VM_HOST }}
+      VM_USER: ${{ secrets.VM_USER }}
+      VM_PORT: ${{ secrets.VM_PORT }}
+      VM_SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+      APP_DIR: /opt/weather-starter
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Prepare SSH client
+        run: |
+          set -euo pipefail
+          : "${VM_HOST:?Missing VM_HOST secret}"
+          : "${VM_USER:?Missing VM_USER secret}"
+          : "${VM_SSH_PRIVATE_KEY:?Missing VM_SSH_PRIVATE_KEY secret}"
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          printf '%s\n' "$VM_SSH_PRIVATE_KEY" > ~/.ssh/weather_starter_deploy
+          chmod 600 ~/.ssh/weather_starter_deploy
+
+          port="${VM_PORT:-22}"
+          ssh-keyscan -H -p "$port" "$VM_HOST" >> ~/.ssh/known_hosts
+        shell: bash
+
+      - name: Sync source to VM
+        run: |
+          set -euo pipefail
+          port="${VM_PORT:-22}"
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/weather_starter_deploy -p ${port} -o StrictHostKeyChecking=yes" \
+            --exclude '.git/' \
+            --exclude 'backend/weather.db' \
+            --exclude 'backend/logs/' \
+            --exclude 'backend/node_modules/' \
+            --exclude 'backend/dist/' \
+            --exclude 'frontend/node_modules/' \
+            --exclude 'frontend/dist/' \
+            ./ "${VM_USER}@${VM_HOST}:${APP_DIR}/"
+        shell: bash
+
+      - name: Build and restart on VM
+        run: |
+          set -euo pipefail
+          port="${VM_PORT:-22}"
+          ssh -i ~/.ssh/weather_starter_deploy \
+            -p "$port" \
+            -o StrictHostKeyChecking=yes \
+            "${VM_USER}@${VM_HOST}" 'bash -se' <<'EOF'
+          set -euo pipefail
+          cd /opt/weather-starter
+          npm ci
+          npm run build
+          sudo systemctl restart weather-starter
+          sudo systemctl is-active --quiet weather-starter
+          curl -fsS http://127.0.0.1:3000/health >/dev/null
+EOF
+        shell: bash

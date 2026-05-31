@@ -188,6 +188,30 @@ Environment variables you can override for redeploy:
 - `BRANCH` (default `main`)
 - `APP_DIR` (default `/opt/weather-starter`)
 
+## GitHub Actions Deploy on Push
+
+If you want the VM to update automatically on every push to `main`, use the GitHub Actions workflow at [.github/workflows/deploy-vm.yml](../.github/workflows/deploy-vm.yml).
+
+This workflow does not use `gcloud compute ssh`, so it avoids the interactive `google_compute_engine` key generation prompt entirely. Instead, it uses a dedicated SSH key pair that you create once for deployment.
+
+Required GitHub repository secrets:
+
+- `VM_HOST` - the VM external IP or hostname
+- `VM_USER` - the SSH user on the VM
+- `VM_PORT` - optional SSH port, defaults to `22`
+- `VM_SSH_PRIVATE_KEY` - the private key with no passphrase
+
+One-time setup:
+
+1. Generate a deploy key pair locally, for example with `ssh-keygen -t ed25519 -f ~/.ssh/weather-starter-deploy -N ''`.
+2. Add the public key to the VM user's `~/.ssh/authorized_keys`.
+3. Save the private key in the GitHub repo secret `VM_SSH_PRIVATE_KEY`.
+4. Save the VM IP or hostname in `VM_HOST` and the SSH user in `VM_USER`.
+
+On each push, the workflow syncs the checked-out source to the VM over SSH, runs `npm ci`, rebuilds the app, restarts `weather-starter`, and checks `http://127.0.0.1:3000/health` on the VM.
+
+If `sudo` prompts for a password on the VM, grant the deploy user passwordless access for the `systemctl` commands or adjust the workflow commands accordingly.
+
 From the VM:
 
 ```bash
