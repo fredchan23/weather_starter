@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-31 | branch `main` | commit `pending` | add docs-site SOP init guide
+
+- status: implemented
+- implementation request: Update docs-site with a standard operating procedure page for session startup (`/init`) and make it discoverable from the docs.
+- implementation challenges:
+  - The SOP needed to align with existing repository conventions (verification, changelog discipline, scoped edits) without duplicating too much content from development docs.
+  - Navigation discoverability required cross-linking from both the docs home map and development page.
+- scope: `docs-site/src/content/docs/sop-init.mdx`, `docs-site/src/content/docs/index.mdx`, `docs-site/src/content/docs/development.mdx`, `docs/exercise_notes.md`.
+- decisions: Added a dedicated SOP page with a step-by-step checklist and linked it from Home and Development rather than embedding the full checklist inline in existing pages.
+- risks: SOP content can drift from actual team workflow if future process changes are not reflected in this page.
+- verification: `cd docs-site && npm run build`, `npm test`, `npm run build`.
+- follow-up: Optionally add a contributor quick-link section in docs-site navigation if SOP becomes a primary entry point.
+
 ## 2026-05-31 | branch `main` | commit `pending` | auto-refresh on load and hero today label
 
 - status: implemented

@@ -1,0 +1,99 @@
+---
+title: SOP /init
+description: Standard operating procedure for starting work in Weather Starter.
+---
+
+# SOP /init
+
+Use this checklist at the start of every implementation session.
+
+## Goal
+
+Create a consistent, low-friction startup routine so changes are safe, reviewable, and easy to hand off.
+
+## 1. Sync And Baseline
+
+From workspace root:
+
+```bash
+git status --short
+npm install
+```
+
+Check for unexpected local changes before editing. If the worktree is not clean, note what is pre-existing versus what you plan to change.
+
+## 2. Read Project Context
+
+Review these files before implementation:
+
+- `AGENTS.md` for required verification and repo conventions
+- `README.md` for feature scope and API overview
+- `docs/agents/architecture.md` for runtime and layering
+- `docs/agents/conventions.md` for naming and behavior rules
+- `docs/exercise_notes.md` for recent implementation history
+
+## 3. Run Local Health Checks
+
+```bash
+npm test
+npm run build
+npm run doctor
+```
+
+Treat failures as blockers before introducing new code changes.
+
+## 4. Plan The Change
+
+Write a short implementation plan with:
+
+- requested outcome
+- exact files to change
+- risks and regressions to watch
+- verification steps
+
+Keep scope narrow and avoid opportunistic refactors.
+
+## 5. Implement In Small Steps
+
+- Make focused edits by feature slice.
+- Preserve existing APIs and conventions unless requirements demand changes.
+- Prefer reusable helpers over copy-paste formatting or logic.
+
+## 6. Verify Before Hand-Off
+
+At minimum, run:
+
+```bash
+npm test
+npm run build
+```
+
+For docs changes in `docs-site`, also run:
+
+```bash
+cd docs-site && npm run build
+```
+
+## 7. Update Changelog
+
+Add an entry to `docs/exercise_notes.md` using the existing template:
+
+- status
+- implementation request
+- implementation challenges
+- scope
+- decisions
+- risks
+- verification
+- follow-up
+
+## 8. Prepare Final Summary
+
+Summarize:
+
+- what changed
+- file list
+- verification results
+- known risks or follow-up
+
+This should be concise and actionable for the next reviewer.
