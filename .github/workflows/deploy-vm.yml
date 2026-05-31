@@ -65,16 +65,9 @@ jobs:
         run: |
           set -euo pipefail
           port="${VM_PORT:-22}"
+          remote_cmd='set -euo pipefail; cd /opt/weather-starter; npm ci; npm run build; sudo systemctl restart weather-starter; sudo systemctl is-active --quiet weather-starter; curl -fsS http://127.0.0.1:3000/health >/dev/null'
           ssh -i ~/.ssh/weather_starter_deploy \
             -p "$port" \
             -o StrictHostKeyChecking=yes \
-            "${VM_USER}@${VM_HOST}" 'bash -se' <<'EOF'
-          set -euo pipefail
-          cd /opt/weather-starter
-          npm ci
-          npm run build
-          sudo systemctl restart weather-starter
-          sudo systemctl is-active --quiet weather-starter
-          curl -fsS http://127.0.0.1:3000/health >/dev/null
-EOF
+            "${VM_USER}@${VM_HOST}" bash -se -c "$remote_cmd"
         shell: bash
