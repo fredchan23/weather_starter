@@ -24,10 +24,11 @@ jobs:
       VM_PORT: ${{ secrets.VM_PORT }}
       VM_SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
       APP_DIR: /opt/weather-starter
+      DEPLOY_BRANCH: main
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Prepare SSH client
         run: |
@@ -45,20 +46,15 @@ jobs:
           ssh-keyscan -H -p "$port" "$VM_HOST" >> ~/.ssh/known_hosts
         shell: bash
 
-      - name: Sync source to VM
+      - name: Update repository on VM
         run: |
           set -euo pipefail
           port="${VM_PORT:-22}"
-          rsync -az --delete \
-            -e "ssh -i ~/.ssh/weather_starter_deploy -p ${port} -o StrictHostKeyChecking=yes" \
-            --exclude '.git/' \
-            --exclude 'backend/weather.db' \
-            --exclude 'backend/logs/' \
-            --exclude 'backend/node_modules/' \
-            --exclude 'backend/dist/' \
-            --exclude 'frontend/node_modules/' \
-            --exclude 'frontend/dist/' \
-            ./ "${VM_USER}@${VM_HOST}:${APP_DIR}/"
+          remote_cmd='set -euo pipefail; cd /opt/weather-starter; git fetch origin main; git reset --hard origin/main; git clean -fd; npm ci; npm run build; sudo systemctl restart weather-starter; sudo systemctl is-active --quiet weather-starter; curl -fsS http://127.0.0.1:3000/health >/dev/null'
+          ssh -i ~/.ssh/weather_starter_deploy \
+            -p "$port" \
+            -o StrictHostKeyChecking=yes \
+            "${VM_USER}@${VM_HOST}" bash -se -c "$remote_cmd"
         shell: bash
 
       - name: Build and restart on VM

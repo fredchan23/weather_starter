@@ -208,7 +208,7 @@ One-time setup:
 3. Save the private key in the GitHub repo secret `VM_SSH_PRIVATE_KEY`.
 4. Save the VM IP or hostname in `VM_HOST` and the SSH user in `VM_USER`.
 
-On each push, the workflow syncs the checked-out source to the VM over SSH, runs `npm ci`, rebuilds the app, restarts `weather-starter`, and checks `http://127.0.0.1:3000/health` on the VM.
+On each push, the workflow SSHes into the VM, fetches `origin/main`, hard-resets the checked-out repo to that commit, removes stray files, runs `npm ci`, rebuilds the app, restarts `weather-starter`, and checks `http://127.0.0.1:3000/health` on the VM.
 
 If `sudo` prompts for a password on the VM, grant the deploy user passwordless access for the `systemctl` commands or adjust the workflow commands accordingly.
 
