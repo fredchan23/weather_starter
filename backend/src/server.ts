@@ -72,17 +72,33 @@ export async function createApp(options: AppOptions = {}) {
 
   app.post('/api/logs', (request, response) => {
     const event = request.body?.event;
-    const metadata = request.body?.metadata;
+    const rawMetadata = request.body?.metadata;
     if (typeof event !== 'string' || !FRONTEND_EVENT_PATTERN.test(event)) {
       response.status(422).json({ detail: 'event is required' });
       return;
     }
+    if (rawMetadata !== undefined) {
+      if (typeof rawMetadata !== 'object' || rawMetadata === null || Array.isArray(rawMetadata)) {
+        response.status(422).json({ detail: 'metadata must be a plain object' });
+        return;
+      }
+      const isDeepObject = Object.values(rawMetadata as Record<string, unknown>).some(
+        (v) => v !== null && typeof v === 'object',
+      );
+      if (isDeepObject) {
+        response.status(422).json({ detail: 'metadata values must be primitives' });
+        return;
+      }
+    }
+    const metadata =
+      rawMetadata && typeof rawMetadata === 'object' && !Array.isArray(rawMetadata)
+        ? Object.fromEntries(Object.entries(rawMetadata as Record<string, unknown>).slice(0, 10))
+        : undefined;
     logger.info(
       {
         source: 'frontend',
         event,
-        metadata:
-          metadata && typeof metadata === 'object' ? metadata : undefined,
+        metadata,
         page:
           typeof request.body?.page === 'string'
             ? request.body.page

@@ -152,6 +152,39 @@ describe('app API', () => {
     expect(response.text).toBe('');
   });
 
+  it('truncates metadata to 10 keys maximum in /api/logs', async () => {
+    const bigMetadata = Object.fromEntries(
+      Array.from({ length: 20 }, (_, i) => [`key${i}`, `val${i}`]),
+    );
+    const response = await request(app)
+      .post('/api/logs')
+      .send({ event: 'test.event', metadata: bigMetadata });
+
+    // Should not reject — just silently truncate
+    expect(response.status).toBe(204);
+  });
+
+  it('rejects deeply nested metadata objects in /api/logs with 422', async () => {
+    // A depth-10 nested object
+    let nested: Record<string, unknown> = { value: 1 };
+    for (let i = 0; i < 10; i++) {
+      nested = { child: nested };
+    }
+    const response = await request(app)
+      .post('/api/logs')
+      .send({ event: 'test.event', metadata: nested });
+
+    expect(response.status).toBe(422);
+  });
+
+  it('rejects array metadata in /api/logs with 422', async () => {
+    const response = await request(app)
+      .post('/api/logs')
+      .send({ event: 'test.event', metadata: [1, 2, 3] });
+
+    expect(response.status).toBe(422);
+  });
+
   it('rejects non-integer locationId with 422 on GET', async () => {
     const responses = await Promise.all([
       request(app).get('/api/locations/abc'),
