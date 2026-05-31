@@ -46,22 +46,29 @@ jobs:
           ssh-keyscan -H -p "$port" "$VM_HOST" >> ~/.ssh/known_hosts
         shell: bash
 
-      - name: Update repository on VM
+      - name: Deploy on VM
         run: |
           set -euo pipefail
           port="${VM_PORT:-22}"
-          remote_cmd='set -euo pipefail; cd /opt/weather-starter; git fetch origin main; git reset --hard origin/main; git clean -fd; npm ci; npm run build; sudo systemctl restart weather-starter; sudo systemctl is-active --quiet weather-starter; curl -fsS http://127.0.0.1:3000/health >/dev/null'
-          ssh -i ~/.ssh/weather_starter_deploy \
-            -p "$port" \
-            -o StrictHostKeyChecking=yes \
-            "${VM_USER}@${VM_HOST}" bash -se -c "$remote_cmd"
-        shell: bash
 
-      - name: Build and restart on VM
-        run: |
-          set -euo pipefail
-          port="${VM_PORT:-22}"
-          remote_cmd='set -euo pipefail; cd /opt/weather-starter; npm ci; npm run build; sudo systemctl restart weather-starter; sudo systemctl is-active --quiet weather-starter; curl -fsS http://127.0.0.1:3000/health >/dev/null'
+          remote_cmd="set -euo pipefail; \
+            cd '${APP_DIR}'; \
+            git fetch origin '${DEPLOY_BRANCH}'; \
+            git reset --hard 'origin/${DEPLOY_BRANCH}'; \
+            git clean -fd; \
+            npm ci; \
+            npm run build; \
+            sudo systemctl restart weather-starter; \
+            sudo systemctl is-active --quiet weather-starter; \
+            for attempt in \\$(seq 1 20); do \
+              curl -fsS http://127.0.0.1:3000/health >/dev/null && exit 0; \
+              sleep 1; \
+            done; \
+            echo 'Health check failed after restart'; \
+            sudo systemctl status weather-starter --no-pager -l || true; \
+            sudo journalctl -u weather-starter -n 120 --no-pager || true; \
+            exit 1"
+
           ssh -i ~/.ssh/weather_starter_deploy \
             -p "$port" \
             -o StrictHostKeyChecking=yes \
