@@ -4,6 +4,20 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-01 | branch `main` | commit `86e6d9c` | security hardening — ADR-001
+
+- status: implemented
+- implementation request: Fix all findings from the security audit (ADR-001) in priority order: helmet headers (H1), rate limiting (H2), drizzle-kit upgrade (H3), locationId param validation (M1), 502 error message sanitization (M3), /api/logs metadata limits (M2), explicit CORS config (M4).
+- implementation challenges:
+  - `express-rate-limit` draft-7 headers use a combined `RateLimit` field, not separate `RateLimit-Limit`/`RateLimit-Remaining`; switched to draft-6 to match test assertions.
+  - Applying `app.use('/api/locations', mutationLimiter)` hit GET routes in tests, causing 429s on unrelated assertions; fixed by targeting only POST routes with `app.post(...)`.
+  - drizzle-kit 0.31.10 still depends transitively on `@esbuild-kit/core-utils` (esbuild ~0.18.x); `npm audit fix --force` would downgrade — accepted residual risk since the vulnerable `serve()` API is not called in this path; the bundled esbuild inside drizzle-kit itself is 0.25.12 (patched).
+  - `locationId` declared inside `try` was out of scope in the `catch` block after moving the guard; hoisted declaration outside.
+- scope: `backend/src/server.ts`, `backend/src/routes/locations.ts`, `backend/src/server.test.ts`, `backend/src/routes/locations.test.ts`, `docs/decisions/ADR-001-security-hardening.md`, `package.json`, `package-lock.json`.
+- decisions: Wrote failing tests before each fix (TDD red-green cycle). Applied helmet as first middleware for broadest coverage. Used POST-only mutation limiter to avoid throttling cheap GETs. Replaced both 502 error message passthroughs with a fixed string, logging originals server-side. Metadata validation rejects arrays and nested objects outright; truncates flat objects to 10 keys. CORS disabled by default (safe for same-origin SPA), opt-in via `ALLOWED_ORIGINS`.
+- verification: `npm test` (48 tests, all pass), `npm run build`, `npm run db:generate` (no schema changes), `npm run lint`.
+- follow-up: Residual `@esbuild-kit/core-utils` esbuild CVE should be revisited when drizzle-kit publishes a patch that removes the dependency. Consider adding `ALLOWED_ORIGINS` to ops/systemd service template.
+
 ## 2026-05-31 | branch `main` | commit `pending` | document Caddy domain and HTTPS setup
 
 - status: implemented
