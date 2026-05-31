@@ -152,6 +152,32 @@ describe('app API', () => {
     expect(response.text).toBe('');
   });
 
+  it('rejects non-integer locationId with 422 on GET', async () => {
+    const responses = await Promise.all([
+      request(app).get('/api/locations/abc'),
+      request(app).get('/api/locations/NaN'),
+      request(app).get('/api/locations/Infinity'),
+      request(app).get('/api/locations/0'),
+      request(app).get('/api/locations/-1'),
+    ]);
+
+    for (const response of responses) {
+      expect(response.status).toBe(422);
+    }
+  });
+
+  it('rejects non-integer locationId with 422 on DELETE', async () => {
+    const response = await request(app).delete('/api/locations/abc');
+
+    expect(response.status).toBe(422);
+  });
+
+  it('rejects non-integer locationId with 422 on POST refresh', async () => {
+    const response = await request(app).post('/api/locations/NaN/refresh');
+
+    expect(response.status).toBe(422);
+  });
+
   it('serves mounted location APIs through /api', async () => {
     const createResponse = await request(app).post('/api/locations').send({
       latitude: 1.35,

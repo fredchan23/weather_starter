@@ -162,7 +162,12 @@ export function createLocationsRouter(
 
   router.get('/locations/:locationId', async (request, response, next) => {
     try {
-      const location = await getLocation(Number(request.params.locationId));
+      const locationId = Number(request.params.locationId);
+      if (!Number.isInteger(locationId) || locationId < 1) {
+        response.status(422).json({ detail: 'locationId must be a positive integer' });
+        return;
+      }
+      const location = await getLocation(locationId);
       if (!location) {
         response.status(404).json({ detail: 'Location not found' });
         return;
@@ -175,7 +180,12 @@ export function createLocationsRouter(
 
   router.delete('/locations/:locationId', async (request, response, next) => {
     try {
-      const deleted = await deleteLocation(Number(request.params.locationId));
+      const locationId = Number(request.params.locationId);
+      if (!Number.isInteger(locationId) || locationId < 1) {
+        response.status(422).json({ detail: 'locationId must be a positive integer' });
+        return;
+      }
+      const deleted = await deleteLocation(locationId);
       if (!deleted) {
         response.status(404).json({ detail: 'Location not found' });
         return;
@@ -192,6 +202,10 @@ export function createLocationsRouter(
     async (request, response, next) => {
       try {
         const locationId = Number(request.params.locationId);
+        if (!Number.isInteger(locationId) || locationId < 1) {
+          response.status(422).json({ detail: 'locationId must be a positive integer' });
+          return;
+        }
         const location = await getLocation(locationId);
         if (!location) {
           response.status(404).json({ detail: 'Location not found' });
