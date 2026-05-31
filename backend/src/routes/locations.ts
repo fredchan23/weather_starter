@@ -153,9 +153,8 @@ export function createLocationsRouter(
         return;
       }
 
-      const detail =
-        error instanceof Error ? error.message : 'Unable to load forecast areas';
-      response.status(502).json({ detail });
+      logger.warn({ err: error }, 'forecast areas unavailable');
+      response.status(502).json({ detail: 'Weather data is temporarily unavailable' });
       return;
     }
   });
@@ -200,8 +199,8 @@ export function createLocationsRouter(
   router.post(
     '/locations/:locationId/refresh',
     async (request, response, next) => {
+      const locationId = Number(request.params.locationId);
       try {
-        const locationId = Number(request.params.locationId);
         if (!Number.isInteger(locationId) || locationId < 1) {
           response.status(422).json({ detail: 'locationId must be a positive integer' });
           return;
@@ -223,7 +222,8 @@ export function createLocationsRouter(
         response.json(updated);
       } catch (error) {
         if (error instanceof WeatherProviderError) {
-          response.status(502).json({ detail: error.message });
+          logger.warn({ err: error, locationId }, 'weather refresh failed');
+          response.status(502).json({ detail: 'Weather data is temporarily unavailable' });
           return;
         }
         next(error);

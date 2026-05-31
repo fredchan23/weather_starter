@@ -402,8 +402,44 @@ describe('locations API', () => {
 
     expect(response.statusCode).toBe(502);
     expect(response.body).toMatchObject({
-      detail: 'upstream unavailable',
+      detail: 'Weather data is temporarily unavailable',
     });
     expect(forecastAreaFetchCount).toBe(1);
+  });
+
+  it('returns 502 with a generic message when weather refresh fails', async () => {
+    const createResponse = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+    });
+    const created = createResponse.body as { id: number };
+
+    const { WeatherProviderError } = await import('../weather.js');
+    // Re-create router with a client that throws WeatherProviderError
+    const { createLocationsRouter: makeRouter } = await import('./locations.js');
+    const failingRouter = makeRouter({
+      weatherClient: {
+        async getCurrentWeather() {
+          throw new WeatherProviderError('Weather provider rejected request (check API key)');
+        },
+        async getForecastAreas() {
+          return forecastAreas;
+        },
+      },
+    });
+
+    // Insert the location into the DB so the refresh handler finds it
+    const refreshResponse = await callRoute(
+      failingRouter,
+      'post',
+      '/locations/:locationId/refresh',
+      { params: { locationId: String(created.id) } },
+    );
+
+    expect(refreshResponse.statusCode).toBe(502);
+    expect(refreshResponse.body).toMatchObject({
+      detail: 'Weather data is temporarily unavailable',
+    });
+    // Must NOT contain the raw error message
+    expect(JSON.stringify(refreshResponse.body)).not.toContain('API key');
   });
 });
