@@ -4,7 +4,7 @@ import { HourlyStrip } from './HourlyStrip';
 import { TenDayForecast } from './TenDayForecast';
 import { TileGrid } from './Tiles';
 import { MapCard } from './MapCard';
-import { formatTemperature, formatTime } from './format';
+import { formatTemperature, formatTime, formatTodayLabel } from './format';
 import type { ForecastPeriod } from '../types';
 
 export function Hero() {
@@ -37,6 +37,7 @@ export function Hero() {
     `${selected.latitude.toFixed(3)}, ${selected.longitude.toFixed(3)}`;
   const condition = selected.weather?.condition || 'Conditions unavailable';
   const observed = formatTime(selected.weather?.observed_at);
+  const todayLabel = formatTodayLabel();
   const validPeriod = selected.weather?.valid_period_text;
   const source = selected.weather?.source;
   const isRefreshing = refreshingId === selected.id;
@@ -84,6 +85,7 @@ export function Hero() {
                 {temperature}
               </div>
               <div className="mt-1 text-lg text-white/90">{condition}</div>
+              <div className="mt-1 text-sm text-white/65">{todayLabel}</div>
               {hasHighLow && (
                 <div className="mt-1 text-sm text-white/70 tabular-nums">
                   H:{high} L:{low}
@@ -98,6 +100,7 @@ export function Hero() {
               <div className="mt-4 text-5xl font-light leading-tight text-white">
                 {condition}
               </div>
+              <div className="mt-2 text-sm text-white/65">{todayLabel}</div>
             </>
           )}
           {observed && (

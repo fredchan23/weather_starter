@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 import {
@@ -28,6 +29,7 @@ export function StoreProvider({ children }: ProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshingId, setRefreshingId] = useState<number | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const didAutoRefreshOnMount = useRef(false);
 
   const load = useCallback(async (): Promise<Location[]> => {
     try {
@@ -44,9 +46,24 @@ export function StoreProvider({ children }: ProviderProps) {
   }, []);
 
   useEffect(() => {
+    if (didAutoRefreshOnMount.current) return;
+    didAutoRefreshOnMount.current = true;
+
     // eslint-disable-next-line react-hooks/set-state-in-effect -- load-on-mount syncs API → React state
     load().then((next) => {
-      if (next.length > 0) setSelectedId((current) => current ?? next[0].id);
+      if (next.length === 0) return;
+
+      const targetId = next[0].id;
+      setSelectedId((current) => current ?? targetId);
+      void refreshLocation(targetId)
+        .then(() => load())
+        .catch((err: unknown) => {
+          setError(err);
+          logInteraction('location_auto_refresh_failed', {
+            locationId: targetId,
+            error: err instanceof Error ? err.message : 'Unknown error',
+          });
+        });
     });
   }, [load]);
 

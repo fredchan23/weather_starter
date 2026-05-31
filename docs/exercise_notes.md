@@ -4,6 +4,19 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-31 | branch `main` | commit `pending` | auto-refresh on load and hero today label
+
+- status: implemented
+- implementation request: Add automatic weather refresh when the site loads and display a Today date label in the hero section.
+- implementation challenges:
+  - The initial page load should remain fast and render cached weather immediately, so startup refresh had to run in the background without blocking first paint.
+  - React Strict Mode can double-run mount effects in development; the load-time refresh flow needed a guard to avoid duplicate refresh calls.
+- scope: `frontend/src/state/store.tsx`, `frontend/src/components/format.ts`, `frontend/src/components/Hero.tsx`, `docs/exercise_notes.md`.
+- decisions: Auto-refresh only the selected/home location on initial load, keep manual refresh unchanged, and render a shared Today label helper in the hero regardless of data source availability.
+- risks: Startup auto-refresh failures now surface as store errors while cached weather still renders; if needed, this can later be softened into a non-blocking toast-only path.
+- verification: `npm test`, `npm run build`.
+- follow-up: Optionally add a frontend test harness to unit-test StoreProvider mount behavior and Hero date-label rendering.
+
 ## 2026-05-23 | branch `main` | commit `pending` | expand docs-site pages from source
 
 - status: implemented
