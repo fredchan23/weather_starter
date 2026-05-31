@@ -1,0 +1,18 @@
+[Unit]
+Description=Weather Starter application
+After=network.target
+
+[Service]
+Type=simple
+User=DEPLOY_USER
+WorkingDirectory=/opt/weather-starter
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOST=127.0.0.1
+Environment=DATABASE_PATH=/var/lib/weather-starter/weather.db
+ExecStart=/usr/bin/env npm run start
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

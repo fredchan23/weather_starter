@@ -16,7 +16,10 @@
     "test": "NODE_OPTIONS=--disable-warning=ExperimentalWarning vitest run",
     "test:watch": "NODE_OPTIONS=--disable-warning=ExperimentalWarning vitest",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate"
+    "db:migrate": "drizzle-kit migrate",
+    "gcp:vm:create": "bash scripts/gcp/provision-vm.sh",
+    "gcp:vm:bootstrap": "bash scripts/gcp/bootstrap-vm.sh",
+    "gcp:vm:redeploy": "bash scripts/gcp/redeploy-vm.sh"
   },
   "workspaces": [
     "frontend",

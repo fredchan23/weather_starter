@@ -4,6 +4,34 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-05-31 | branch `main` | commit `pending` | add Compute Engine script workflow
+
+- status: implemented
+- implementation request: Add runnable scripts and documentation so the Compute Engine deployment path can be learned and executed step by step.
+- implementation challenges:
+  - The scripts had to be practical for immediate use while remaining readable enough for learning, which required balancing automation with explicit command steps.
+  - The bootstrap flow needed to handle both first-time setup and repeat runs without destroying the VM state.
+  - Documentation had to cover script defaults and override variables so users can adapt to different repo URLs and VM names without editing script code.
+- scope: `scripts/gcp/provision-vm.sh`, `scripts/gcp/bootstrap-vm.sh`, `scripts/gcp/redeploy-vm.sh`, `package.json`, `README.md`, `docs/compute_engine.md`, `docs/exercise_notes.md`.
+- decisions: Added three focused scripts (`create`, `bootstrap`, `redeploy`) with environment-variable overrides, wired npm commands for each script, and expanded deployment docs with both manual and script-driven flows.
+- risks: Bootstrap assumes Debian-based apt package management and remote access through `gcloud compute ssh`; non-Debian images or restricted environments will need script adjustments.
+- verification: `npm test`, `npm run build`.
+- follow-up: Optionally add a lightweight health-check smoke script that runs after bootstrap/redeploy and prints pass/fail output.
+
+## 2026-05-31 | branch `main` | commit `pending` | add Compute Engine deployment support
+
+- status: implemented
+- implementation request: Start implementing the Compute Engine deployment path for the current monolith in project `automatic-ace-488412-a7`.
+- implementation challenges:
+  - The app already fit a VM deployment model, so the main work was turning the plan into concrete runtime and ops artifacts without overengineering the deployment.
+  - Production startup previously hard-coded `127.0.0.1`, which is safe behind a reverse proxy but too rigid for future direct binding or other host-level deployment arrangements.
+  - Deployment guidance needed to be specific enough to use on GCP while still keeping the repository usable as a template.
+- scope: `backend/src/server.ts`, `README.md`, `docs/compute_engine.md`, `ops/systemd/weather-starter.service.example`, `ops/caddy/Caddyfile.example`, `docs/exercise_notes.md`.
+- decisions: Added configurable host binding plus graceful shutdown to the production server entrypoint, documented a single-VM Compute Engine deployment with Caddy and systemd, and committed example service configs so the deployment steps are reproducible from the repo.
+- risks: The Compute Engine deployment docs assume Debian-based VM provisioning and a relatively small hobby-scale workload on one VM; a higher-traffic deployment would need stronger backup and capacity planning.
+- verification: `npm test`, `npm run build`.
+- follow-up: Optionally add an automated bootstrap script or Terraform config once the manual Compute Engine flow has been exercised end to end.
+
 ## 2026-05-31 | branch `main` | commit `pending` | improve mobile dashboard responsiveness
 
 - status: implemented

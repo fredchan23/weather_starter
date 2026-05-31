@@ -4,6 +4,8 @@ A minimal TypeScript weather app starter project for agentic coding.
 
 The app tracks Singapore locations and stores the latest weather snapshot for each one. It uses a Node/Express backend, a React/Vite frontend, and Portless for a stable local `.localhost` URL.
 
+For internet deployment on Google Cloud with the current SQLite-backed architecture, the recommended path is a single Compute Engine VM. See `docs/compute_engine.md`.
+
 ## Tech Stack
 
 | Layer        | Tools                                                                 |
@@ -60,7 +62,28 @@ npm run doctor   # Verify /health and /api/locations
 npm run reset    # Remove the local SQLite database
 npm run db:generate # Generate Drizzle migrations after schema changes
 npm run db:migrate  # Apply Drizzle migrations to backend/weather.db
+npm run gcp:vm:create # Create Compute Engine VM and web firewall rule
+npm run gcp:vm:bootstrap # Install app and services on VM (requires REPO_URL)
+npm run gcp:vm:redeploy # Pull, build, and restart app service on VM
 ```
+
+## Deployment
+
+Recommended production target for the current app architecture:
+
+- One Google Compute Engine VM
+- One Node process started with `npm run start`
+- One reverse proxy such as Caddy for public HTTP/HTTPS
+- One SQLite database persisted on the VM's persistent disk
+
+See `docs/compute_engine.md` for a full deployment walkthrough targeting project `automatic-ace-488412-a7`.
+
+Learning path with scripts:
+
+1. Run `npm run gcp:vm:create` from this repo.
+2. Run `REPO_URL='<your-git-repo-url>' npm run gcp:vm:bootstrap`.
+3. Confirm health with the VM external IP.
+4. Use `npm run gcp:vm:redeploy` for each code update.
 
 ## API
 

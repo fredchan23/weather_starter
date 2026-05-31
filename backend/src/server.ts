@@ -108,11 +108,39 @@ export async function createApp(options: AppOptions = {}) {
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
   const port = Number(process.env.PORT ?? 3000);
+  const host = process.env.HOST ?? '127.0.0.1';
   const { server } = await createApp();
 
-  server.listen(port, '127.0.0.1', () => {
+  let shuttingDown = false;
+  const shutdown = (signal: NodeJS.Signals) => {
+    if (shuttingDown) return;
+    shuttingDown = true;
+    logger.info({ signal }, 'Weather Starter shutting down');
+
+    const forceExitTimer = setTimeout(() => {
+      logger.error({ signal }, 'Weather Starter forced shutdown');
+      process.exit(1);
+    }, 10_000);
+    forceExitTimer.unref();
+
+    server.close((error) => {
+      clearTimeout(forceExitTimer);
+      if (error) {
+        logger.error({ err: error, signal }, 'Weather Starter shutdown failed');
+        process.exit(1);
+      }
+
+      logger.info({ signal }, 'Weather Starter stopped');
+      process.exit(0);
+    });
+  };
+
+  process.on('SIGINT', () => shutdown('SIGINT'));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+  server.listen(port, host, () => {
     logger.info(
-      { url: `http://127.0.0.1:${port}` },
+      { host, port },
       'Weather Starter listening',
     );
   });

@@ -1,0 +1,9 @@
+your-domain.example {
+  encode gzip zstd
+  reverse_proxy 127.0.0.1:3000
+}
+
+:80 {
+  encode gzip zstd
+  reverse_proxy 127.0.0.1:3000
+}
