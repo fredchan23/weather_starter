@@ -31,7 +31,17 @@ export async function createApp(options: AppOptions = {}) {
   const enableRequestLogging =
     options.enableRequestLogging ?? process.env.NODE_ENV !== 'test';
 
-  app.use(helmet());
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+          'img-src': ["'self'", 'data:', 'https://*.cartocdn.com', 'https://*.openstreetmap.org'],
+          'connect-src': ["'self'"],
+        },
+      },
+    }),
+  );
 
   const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? '')
     .split(',')
