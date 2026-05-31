@@ -119,6 +119,21 @@ describe('app API', () => {
     expect(response.headers['referrer-policy']).toBeTruthy();
   });
 
+  it('includes rate-limit headers on API responses', async () => {
+    const response = await request(app).get('/api/locations');
+
+    expect(response.headers['ratelimit-limit']).toBeTruthy();
+    expect(response.headers['ratelimit-remaining']).toBeTruthy();
+  });
+
+  it('includes rate-limit headers on POST /api/logs', async () => {
+    const response = await request(app)
+      .post('/api/logs')
+      .send({ event: 'test.event' });
+
+    expect(response.headers['ratelimit-limit']).toBeTruthy();
+  });
+
   it('validates /api/logs event payload', async () => {
     const response = await request(app).post('/api/logs').send({});
 

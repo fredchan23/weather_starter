@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import pinoHttpModule from 'pino-http';
 import { createServer as createHttpServer } from 'node:http';
 import { dirname, resolve } from 'node:path';
@@ -30,6 +31,25 @@ export async function createApp(options: AppOptions = {}) {
     options.enableRequestLogging ?? process.env.NODE_ENV !== 'test';
 
   app.use(helmet());
+
+  // General API limit: 120 req/min per IP
+  const apiLimiter = rateLimit({
+    windowMs: 60_000,
+    max: 120,
+    standardHeaders: 'draft-6',
+    legacyHeaders: false,
+  });
+  // Mutation limit: 10 req/min per IP (each refresh fans out to 10 upstream calls)
+  const mutationLimiter = rateLimit({
+    windowMs: 60_000,
+    max: 10,
+    standardHeaders: 'draft-6',
+    legacyHeaders: false,
+  });
+
+  app.use('/api', apiLimiter);
+  app.use('/api/locations', mutationLimiter);
+  app.use('/api/logs', mutationLimiter);
 
   if (enableRequestLogging) {
     app.use(pinoHttp({ logger }));
