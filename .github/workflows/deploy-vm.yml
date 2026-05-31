@@ -28,7 +28,7 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Prepare SSH client
         run: |
@@ -51,26 +51,8 @@ jobs:
           set -euo pipefail
           port="${VM_PORT:-22}"
 
-          remote_cmd="set -euo pipefail; \
-            cd '${APP_DIR}'; \
-            git fetch origin '${DEPLOY_BRANCH}'; \
-            git reset --hard 'origin/${DEPLOY_BRANCH}'; \
-            git clean -fd; \
-            npm ci; \
-            npm run build; \
-            sudo systemctl restart weather-starter; \
-            sudo systemctl is-active --quiet weather-starter; \
-            for attempt in \\$(seq 1 20); do \
-              curl -fsS http://127.0.0.1:3000/health >/dev/null && exit 0; \
-              sleep 1; \
-            done; \
-            echo 'Health check failed after restart'; \
-            sudo systemctl status weather-starter --no-pager -l || true; \
-            sudo journalctl -u weather-starter -n 120 --no-pager || true; \
-            exit 1"
-
           ssh -i ~/.ssh/weather_starter_deploy \
             -p "$port" \
             -o StrictHostKeyChecking=yes \
-            "${VM_USER}@${VM_HOST}" bash -se -c "$remote_cmd"
+            "${VM_USER}@${VM_HOST}" bash -se < scripts/gcp/deploy-remote.sh
         shell: bash
