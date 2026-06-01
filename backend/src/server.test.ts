@@ -185,6 +185,11 @@ describe('app API', () => {
     expect(response.status).toBe(422);
   });
 
+  it('GET /api/logs is not subject to mutationLimiter — ratelimit-limit should be 120', async () => {
+    const response = await request(app).get('/api/logs');
+    expect(response.headers['ratelimit-limit']).toBe('120');
+  });
+
   it('does not echo back arbitrary origins in CORS headers', async () => {
     const response = await request(app)
       .get('/api/locations')

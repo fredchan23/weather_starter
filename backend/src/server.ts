@@ -71,7 +71,7 @@ export async function createApp(options: AppOptions = {}) {
   // POST-only mutation limit: these endpoints fan out to 10 upstream HTTP calls each
   app.post('/api/locations', mutationLimiter);
   app.post('/api/locations/:locationId/refresh', mutationLimiter);
-  app.use('/api/logs', mutationLimiter);
+  app.post('/api/logs', mutationLimiter);
 
   if (enableRequestLogging) {
     app.use(pinoHttp({ logger }));
