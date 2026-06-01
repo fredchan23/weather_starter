@@ -76,7 +76,7 @@ export function Hero() {
               <span>Home</span>
             </div>
           )}
-          <h1 className="text-3xl font-light leading-tight text-white sm:text-4xl lg:text-5xl">
+          <h1 className="break-words text-3xl font-light leading-tight text-white sm:text-4xl lg:text-5xl">
             {area}
           </h1>
           {hasTemperature ? (

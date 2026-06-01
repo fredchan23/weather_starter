@@ -102,7 +102,7 @@ export function AirQualityTile({ weather }: WeatherProps) {
         max={300}
         gradientClass="bg-gradient-to-r from-emerald-400 via-yellow-300 via-orange-400 to-red-500"
       />
-      <p className="mt-3 text-xs leading-snug text-white/70">
+      <p className="mt-3 break-words text-xs leading-snug text-white/70">
         PM2.5 {pm25} ug/m3 · {weather?.air_quality_region ?? 'nearest'} region
       </p>
     </TileShell>
@@ -118,7 +118,7 @@ export function WindTile({ weather }: WeatherProps) {
   return (
     <TileShell icon={<WindIcon />} title="Wind" className="sm:col-span-2">
       <div className="grid grid-cols-[1fr_auto] items-center gap-4">
-        <ul className="space-y-2 text-sm">
+        <ul className="min-w-0 space-y-2 text-sm">
           <li
             className={`flex justify-between ${hasDirection ? 'border-b border-white/10 pb-2' : ''}`}
           >
