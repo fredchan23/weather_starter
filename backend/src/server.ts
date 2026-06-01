@@ -71,6 +71,10 @@ export async function createApp(options: AppOptions = {}) {
     legacyHeaders: false,
   });
 
+  // Note: mutation endpoints simultaneously consume both apiLimiter (120/min) and
+  // mutationLimiter (10/min). RateLimit-* headers reflect only the mutationLimiter
+  // because it runs last and overwrites the header. The apiLimiter budget is silently
+  // consumed alongside it.
   app.use('/api', apiLimiter);
   // POST-only mutation limit: these endpoints fan out to 10 upstream HTTP calls each
   app.post('/api/locations', mutationLimiter);
