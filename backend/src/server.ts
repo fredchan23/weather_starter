@@ -52,6 +52,10 @@ export async function createApp(options: AppOptions = {}) {
     app.use('/api', cors({ origin: allowedOrigins, credentials: true }));
   }
 
+  if (enableRequestLogging) {
+    app.use(pinoHttp({ logger }));
+  }
+
   // General API limit: 120 req/min per IP
   const apiLimiter = rateLimit({
     windowMs: 60_000,
@@ -72,10 +76,6 @@ export async function createApp(options: AppOptions = {}) {
   app.post('/api/locations', mutationLimiter);
   app.post('/api/locations/:locationId/refresh', mutationLimiter);
   app.post('/api/logs', mutationLimiter);
-
-  if (enableRequestLogging) {
-    app.use(pinoHttp({ logger }));
-  }
 
   app.use((request, response, next) => {
     if (request.path.startsWith('/frontman')) {
