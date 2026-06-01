@@ -56,20 +56,11 @@ export async function createApp(options: AppOptions = {}) {
     app.use(pinoHttp({ logger }));
   }
 
+  const limiterBase = { windowMs: 60_000, standardHeaders: 'draft-6' as const, legacyHeaders: false };
   // General API limit: 120 req/min per IP
-  const apiLimiter = rateLimit({
-    windowMs: 60_000,
-    max: 120,
-    standardHeaders: 'draft-6',
-    legacyHeaders: false,
-  });
+  const apiLimiter = rateLimit({ ...limiterBase, max: 120 });
   // Mutation limit: 10 req/min per IP (each refresh fans out to 10 upstream calls)
-  const mutationLimiter = rateLimit({
-    windowMs: 60_000,
-    max: 10,
-    standardHeaders: 'draft-6',
-    legacyHeaders: false,
-  });
+  const mutationLimiter = rateLimit({ ...limiterBase, max: 10 });
 
   // Note: mutation endpoints simultaneously consume both apiLimiter (120/min) and
   // mutationLimiter (10/min). RateLimit-* headers reflect only the mutationLimiter
