@@ -4,6 +4,16 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-01 | branch `main` | commits `fdcd0df`–`fa72b25` | security hardening Phase 1 + Phase 2
+
+- status: implemented
+- implementation request: work through all 7 tasks in docs/pending/security-hardening-followup.md using TDD + incremental implementation
+- implementation challenges: TypeScript flagged `locationId` as used-before-assigned in the refresh route catch block after extracting `parseLocationId`; fixed by initializing to `null`
+- scope: `backend/src/server.ts`, `backend/src/routes/locations.ts`, `backend/src/routes/locations.test.ts`
+- decisions: Task 3 used Option A (comment only) — Option B's rate-limit counter separation is not testable without exhausting live buckets; `parseLocationId` exported from locations.ts so it can be unit-tested directly
+- verification: `npm test` (53 tests, all pass), `npm run build` (clean)
+- follow-up: Phase 3 items (TLS 1.2 minimum, modern ciphers, DNSSEC, BREACH mitigation) are Cloudflare/registrar dashboard changes — no code review needed
+
 ## 2026-06-01 | branch `main` | commit `3bd2de8` | 360px mobile viewport support + CSP dev-mode fix
 
 - status: implemented

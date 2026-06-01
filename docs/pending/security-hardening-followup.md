@@ -2,7 +2,7 @@
 
 **Source:** Code review (7 findings) + CSA Cyber Health Check scan (weather.assurecraft.org, 2026-06-01, score 58%)
 **Branch reviewed:** `main` (commit `5555539`)
-**Status:** Pending — do NOT start until frontend bug sprint is complete
+**Status:** Phase 1 ✅ complete (`fdcd0df`–`d4371e7`) · Phase 2 ✅ complete (`b544bc8`–`fa72b25`) · Phase 3 pending (Cloudflare/registrar, no code)
 
 ---
 
@@ -13,9 +13,9 @@
 **Change:** `app.use('/api/logs', mutationLimiter)` → `app.post('/api/logs', mutationLimiter)`
 **Why:** `app.use` throttles all HTTP methods at 10 req/min, contradicting the "POST-only" comment and the pattern used for the other two mutation routes.
 **Acceptance criteria:**
-- [ ] `OPTIONS /api/logs` and `GET /api/logs` are no longer subject to the 10 req/min bucket
-- [ ] `POST /api/logs` still triggers the mutation limiter
-- [ ] `npm test` passes, `npm run build` clean
+- [x] `OPTIONS /api/logs` and `GET /api/logs` are no longer subject to the 10 req/min bucket
+- [x] `POST /api/logs` still triggers the mutation limiter
+- [x] `npm test` passes, `npm run build` clean
 
 ---
 
@@ -24,9 +24,9 @@
 **Change:** Move the `if (enableRequestLogging) { app.use(pinoHttp(...)) }` block to before the rate limiter definitions (currently line 54).
 **Why:** When a rate limiter sends a 429 without calling `next()`, pino-http never attaches its `res.finish` listener — rate-limited requests produce no log entry, making brute-force/DDoS invisible in logs.
 **Acceptance criteria:**
-- [ ] A request that hits the rate limit still produces a pino log entry
-- [ ] Existing tests pass (they disable request logging, no test changes needed)
-- [ ] Manual: hit rate limit with `curl`, confirm log line appears
+- [x] A request that hits the rate limit still produces a pino log entry
+- [x] Existing tests pass (they disable request logging, no test changes needed)
+- [ ] Manual: hit rate limit with `curl`, confirm log line appears (infrastructure verification, not automated)
 
 ---
 
