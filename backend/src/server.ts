@@ -114,10 +114,9 @@ export async function createApp(options: AppOptions = {}) {
         return;
       }
     }
-    const metadata =
-      rawMetadata && typeof rawMetadata === 'object' && !Array.isArray(rawMetadata)
-        ? Object.fromEntries(Object.entries(rawMetadata as Record<string, unknown>).slice(0, 10))
-        : undefined;
+    const metadata = rawMetadata
+      ? Object.fromEntries(Object.entries(rawMetadata as Record<string, unknown>).slice(0, 10))
+      : undefined;
     logger.info(
       {
         source: 'frontend',
