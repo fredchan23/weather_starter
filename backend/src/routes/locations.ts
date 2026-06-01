@@ -161,8 +161,8 @@ export function createLocationsRouter(
 
   router.get('/locations/:locationId', async (request, response, next) => {
     try {
-      const locationId = Number(request.params.locationId);
-      if (!Number.isInteger(locationId) || locationId < 1) {
+      const locationId = parseLocationId(request.params.locationId);
+      if (locationId === null) {
         response.status(422).json({ detail: 'locationId must be a positive integer' });
         return;
       }
@@ -179,8 +179,8 @@ export function createLocationsRouter(
 
   router.delete('/locations/:locationId', async (request, response, next) => {
     try {
-      const locationId = Number(request.params.locationId);
-      if (!Number.isInteger(locationId) || locationId < 1) {
+      const locationId = parseLocationId(request.params.locationId);
+      if (locationId === null) {
         response.status(422).json({ detail: 'locationId must be a positive integer' });
         return;
       }
@@ -199,10 +199,10 @@ export function createLocationsRouter(
   router.post(
     '/locations/:locationId/refresh',
     async (request, response, next) => {
-      let locationId: number;
+      let locationId: number | null = null;
       try {
-        locationId = Number(request.params.locationId);
-        if (!Number.isInteger(locationId) || locationId < 1) {
+        locationId = parseLocationId(request.params.locationId);
+        if (locationId === null) {
           response.status(422).json({ detail: 'locationId must be a positive integer' });
           return;
         }
@@ -237,6 +237,11 @@ export function createLocationsRouter(
 
 function normalizeCoordinate(value: number): number {
   return Number(value.toFixed(4));
+}
+
+export function parseLocationId(raw: string): number | null {
+  const id = Number(raw);
+  return Number.isInteger(id) && id >= 1 ? id : null;
 }
 
 function mergeWeatherSnapshot(

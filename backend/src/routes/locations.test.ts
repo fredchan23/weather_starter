@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { Router } from 'express';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { CONDITION_UNAVAILABLE, type WeatherSnapshot } from '../weather.js';
+import { parseLocationId } from './locations.js';
 
 const weather: WeatherSnapshot = {
   condition: 'Cloudy',
@@ -441,5 +442,27 @@ describe('locations API', () => {
     });
     // Must NOT contain the raw error message
     expect(JSON.stringify(refreshResponse.body)).not.toContain('API key');
+  });
+});
+
+describe('parseLocationId', () => {
+  it('returns the parsed integer for a valid positive integer string', () => {
+    expect(parseLocationId('1')).toBe(1);
+    expect(parseLocationId('42')).toBe(42);
+  });
+
+  it('returns null for non-numeric strings', () => {
+    expect(parseLocationId('abc')).toBeNull();
+    expect(parseLocationId('NaN')).toBeNull();
+    expect(parseLocationId('Infinity')).toBeNull();
+  });
+
+  it('returns null for zero and negative integers', () => {
+    expect(parseLocationId('0')).toBeNull();
+    expect(parseLocationId('-1')).toBeNull();
+  });
+
+  it('returns null for floats', () => {
+    expect(parseLocationId('1.5')).toBeNull();
   });
 });
