@@ -4,6 +4,22 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-01 | branch `main` | commit `3bd2de8` | 360px mobile viewport support + CSP dev-mode fix
+
+- status: implemented
+- implementation request: Assess and fix text overflow observed at 360px mobile viewport width (screenshot: Golden Hour theme, UV "Moderate" label and FORECAST card clipped). Support 360px as minimum width. Fix blank dev-server load caused by CSP blocking Vite HMR.
+- implementation challenges:
+  - Root cause was non-obvious: `AirQualityTile` and `WindTile` passed `col-span-2` unconditionally to `TileShell`. In a `grid-cols-1` context (< 640px), CSS Grid generates an implicit second column to satisfy the span, making every other tile render at half-width (~148px) and causing overflow. Changing two class names (`col-span-2` → `sm:col-span-2`) fixed the layout entirely.
+  - The CSP added in the previous session was applied unconditionally. Vite's HMR WebSocket (`ws://`) and the `@vitejs/plugin-react` inline preamble are both blocked by a strict `script-src 'self'` / `connect-src 'self'` policy, causing a blank page. The fix: disable helmet's CSP in dev (`NODE_ENV !== 'production'`); production CSP unchanged.
+- scope: `frontend/src/components/Tiles.tsx`, `frontend/src/components/Hero.tsx`, `backend/src/server.ts`.
+- decisions:
+  - Scoped `col-span-2` to `sm:col-span-2` rather than removing it — the full-row layout for Air Quality and Wind tiles at ≥ 640px is correct and intentional.
+  - Added `min-w-0` to the Wind tile's text column (inside `grid-cols-[1fr_auto]`) so it can shrink without pushing the compass out.
+  - Added `break-words` to the Air Quality PM2.5 paragraph (API-sourced region name) and the Hero `<h1>` (variable-length area name) as defensive overflow guards.
+  - Disabled CSP entirely in dev rather than enumerating Vite's injections — dev is localhost-only, enumerating Vite internals is fragile across versions.
+- verification: `npm test` (48 tests, all pass), `npm run build`, `npm run dev` — 360px DevTools viewport: all tiles single-column, no overflow in 4 themes; site loads without CSP console errors.
+- follow-up: none.
+
 ## 2026-06-01 | branch `main` | commit `86e6d9c` | security hardening — ADR-001
 
 - status: implemented
