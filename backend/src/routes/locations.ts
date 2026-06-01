@@ -199,8 +199,9 @@ export function createLocationsRouter(
   router.post(
     '/locations/:locationId/refresh',
     async (request, response, next) => {
-      const locationId = Number(request.params.locationId);
+      let locationId: number;
       try {
+        locationId = Number(request.params.locationId);
         if (!Number.isInteger(locationId) || locationId < 1) {
           response.status(422).json({ detail: 'locationId must be a positive integer' });
           return;
