@@ -31,9 +31,10 @@ export async function createApp(options: AppOptions = {}) {
   const enableRequestLogging =
     options.enableRequestLogging ?? process.env.NODE_ENV !== 'test';
 
+  const isDev = process.env.NODE_ENV !== 'production';
   app.use(
     helmet({
-      contentSecurityPolicy: {
+      contentSecurityPolicy: isDev ? false : {
         directives: {
           ...helmet.contentSecurityPolicy.getDefaultDirectives(),
           'img-src': ["'self'", 'data:', 'https://*.cartocdn.com', 'https://*.openstreetmap.org'],
