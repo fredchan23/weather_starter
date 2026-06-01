@@ -22,7 +22,7 @@
     "@vitejs/plugin-react": "^5.1.4",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.49",
-    "react-grab": "^0.1.32",
+    "react-grab": "^0.1.44",
     "tailwindcss": "^3.4.15",
     "vite": "^7.3.1"
   }
