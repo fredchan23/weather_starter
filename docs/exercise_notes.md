@@ -4,6 +4,16 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-05 | branch `main` | CI fix | GitHub Actions Node.js 20 deprecation
+
+- status: fixed
+- implementation request: Deploy to `main` surfaced a Node.js 20 deprecation warning on `actions/checkout@v4`. Warning is non-blocking today but would become a hard failure after June 16, 2026.
+- implementation challenges: `actions/checkout@v4` ships a Node.js 20 binary with no Node.js 24 native version pinnable yet (`@v5` pending). Needed a bridge fix rather than a version bump.
+- scope: `.github/workflows/deploy-vm.yml`
+- decisions: Added `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'` env var to the checkout step per GitHub's documented opt-in mechanism. This is a bridge measure — replace with a version pin once a Node.js 24 native `actions/checkout` release is stable.
+- verification: No automated test for workflow files; fix verified by reading the GitHub Actions changelog guidance.
+- follow-up: When `actions/checkout@v5` (or a `@v4.x` patch with Node.js 24 support) ships, replace the env var with a version pin. Track at https://github.com/actions/checkout/releases. Hard deadline: September 16, 2026 (Node.js 20 removed from runners).
+
 ## 2026-06-05 | branch `main` | commits `a7a832d`–`cda9e0e` | region→area picker (Checkpoint 2)
 
 - status: implemented
