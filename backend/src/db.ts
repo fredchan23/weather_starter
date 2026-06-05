@@ -57,17 +57,19 @@ await migrate(
   { migrationsFolder: join(process.cwd(), 'backend', 'drizzle') },
 );
 
-export async function listLocations(): Promise<LocationRecord[]> {
+export async function listLocations(sessionId: string): Promise<LocationRecord[]> {
   return (
     await db
       .select()
       .from(locations)
+      .where(eq(locations.sessionId, sessionId))
       .orderBy(desc(locations.createdAt), desc(locations.id))
       .all()
   ).map(rowToRecord);
 }
 
 export async function createLocation(
+  sessionId: string,
   latitude: number,
   longitude: number,
 ): Promise<LocationRecord> {
@@ -75,7 +77,11 @@ export async function createLocation(
     .select({ id: locations.id })
     .from(locations)
     .where(
-      and(eq(locations.latitude, latitude), eq(locations.longitude, longitude)),
+      and(
+        eq(locations.sessionId, sessionId),
+        eq(locations.latitude, latitude),
+        eq(locations.longitude, longitude),
+      ),
     )
     .get();
 
@@ -90,6 +96,7 @@ export async function createLocation(
   const row = await db
     .insert(locations)
     .values({
+      sessionId,
       latitude,
       longitude,
       createdAt,
@@ -101,38 +108,46 @@ export async function createLocation(
   return rowToRecord(row);
 }
 
-export async function getLocation(id: number): Promise<LocationRecord | null> {
+export async function getLocation(
+  id: number,
+  sessionId: string,
+): Promise<LocationRecord | null> {
   const row = await db
     .select()
     .from(locations)
-    .where(eq(locations.id, id))
+    .where(and(eq(locations.id, id), eq(locations.sessionId, sessionId)))
     .get();
   return row ? rowToRecord(row) : null;
 }
 
 export async function deleteLocation(
   id: number,
+  sessionId: string,
 ): Promise<LocationRecord | null> {
   const row = await db
     .select()
     .from(locations)
-    .where(eq(locations.id, id))
+    .where(and(eq(locations.id, id), eq(locations.sessionId, sessionId)))
     .get();
   if (!row) return null;
 
-  await db.delete(locations).where(eq(locations.id, id)).run();
+  await db
+    .delete(locations)
+    .where(and(eq(locations.id, id), eq(locations.sessionId, sessionId)))
+    .run();
   return rowToRecord(row);
 }
 
 export async function updateWeather(
   id: number,
+  sessionId: string,
   weather: WeatherSnapshot,
 ): Promise<LocationRecord | null> {
   const columns = weatherToColumns(weather);
   const row = await db
     .update(locations)
     .set(columns)
-    .where(eq(locations.id, id))
+    .where(and(eq(locations.id, id), eq(locations.sessionId, sessionId)))
     .returning()
     .get();
 

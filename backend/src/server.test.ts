@@ -271,7 +271,11 @@ describe('app API', () => {
       },
     });
 
-    const listResponse = await request(app).get('/api/locations');
+    const rawCookie: unknown = createResponse.headers['set-cookie'];
+    const sessionCookie = Array.isArray(rawCookie) ? rawCookie[0] : (rawCookie as string | undefined) ?? '';
+    const listResponse = await request(app)
+      .get('/api/locations')
+      .set('Cookie', sessionCookie);
 
     expect(listResponse.status).toBe(200);
     expect(listResponse.body).toMatchObject({

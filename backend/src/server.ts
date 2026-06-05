@@ -5,6 +5,7 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import pinoHttpModule from 'pino-http';
 import { createServer as createHttpServer } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import {
@@ -123,6 +124,8 @@ export async function createApp(options: AppOptions = {}) {
     response.status(204).end();
   });
 
+  app.use(sessionMiddleware);
+
   app.use(
     '/api',
     createLocationsRouter({ weatherClient: options.weatherClient }),
@@ -159,6 +162,42 @@ export async function createApp(options: AppOptions = {}) {
   );
 
   return { app, server };
+}
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function parseCookies(header: string): Record<string, string> {
+  const result: Record<string, string> = {};
+  for (const pair of header.split(';')) {
+    const eqIdx = pair.indexOf('=');
+    if (eqIdx < 1) continue;
+    const key = pair.slice(0, eqIdx).trim();
+    const value = pair.slice(eqIdx + 1).trim();
+    if (key) result[key] = value;
+  }
+  return result;
+}
+
+function sessionMiddleware(
+  request: express.Request,
+  response: express.Response,
+  next: express.NextFunction,
+) {
+  const cookies = parseCookies(request.headers.cookie ?? '');
+  const existing = cookies.wsid;
+  const sessionId = existing && UUID_RE.test(existing) ? existing : randomUUID();
+
+  if (sessionId !== existing) {
+    response.cookie('wsid', sessionId, {
+      httpOnly: true,
+      sameSite: 'lax',
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+    });
+  }
+
+  response.locals.sessionId = sessionId;
+  next();
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

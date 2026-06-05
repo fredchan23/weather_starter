@@ -56,7 +56,8 @@ export function createLocationsRouter(
 
   router.get('/locations', async (_request, response, next) => {
     try {
-      response.json({ locations: await listLocations() });
+      const sessionId = response.locals.sessionId as string;
+      response.json({ locations: await listLocations(sessionId) });
     } catch (error) {
       next(error);
     }
@@ -88,9 +89,11 @@ export function createLocationsRouter(
         return;
       }
 
+      const sessionId = response.locals.sessionId as string;
       const normalizedLatitude = normalizeCoordinate(latitude);
       const normalizedLongitude = normalizeCoordinate(longitude);
       const location = await createLocation(
+        sessionId,
         normalizedLatitude,
         normalizedLongitude,
       );
@@ -100,7 +103,7 @@ export function createLocationsRouter(
           location.latitude,
           location.longitude,
         );
-        const updated = await updateWeather(location.id, snapshot);
+        const updated = await updateWeather(location.id, sessionId, snapshot);
         response.status(201).json(updated ?? location);
       } catch (error) {
         if (!(error instanceof WeatherProviderError)) throw error;
@@ -166,7 +169,8 @@ export function createLocationsRouter(
         response.status(422).json({ detail: 'locationId must be a positive integer' });
         return;
       }
-      const location = await getLocation(locationId);
+      const sessionId = response.locals.sessionId as string;
+      const location = await getLocation(locationId, sessionId);
       if (!location) {
         response.status(404).json({ detail: 'Location not found' });
         return;
@@ -184,7 +188,8 @@ export function createLocationsRouter(
         response.status(422).json({ detail: 'locationId must be a positive integer' });
         return;
       }
-      const deleted = await deleteLocation(locationId);
+      const sessionId = response.locals.sessionId as string;
+      const deleted = await deleteLocation(locationId, sessionId);
       if (!deleted) {
         response.status(404).json({ detail: 'Location not found' });
         return;
@@ -206,7 +211,8 @@ export function createLocationsRouter(
           response.status(422).json({ detail: 'locationId must be a positive integer' });
           return;
         }
-        const location = await getLocation(locationId);
+        const sessionId = response.locals.sessionId as string;
+        const location = await getLocation(locationId, sessionId);
         if (!location) {
           response.status(404).json({ detail: 'Location not found' });
           return;
@@ -218,6 +224,7 @@ export function createLocationsRouter(
         );
         const updated = await updateWeather(
           locationId,
+          sessionId,
           mergeWeatherSnapshot(location.weather, snapshot),
         );
         response.json(updated);

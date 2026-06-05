@@ -40,16 +40,20 @@ interface MockResponse {
   statusCode: number;
   body: unknown;
   ended: boolean;
+  locals: Record<string, unknown>;
   status: (code: number) => MockResponse;
   json: (payload: unknown) => MockResponse;
   end: () => MockResponse;
 }
 
-function createMockResponse(): MockResponse {
+function createMockResponse(
+  locals: Record<string, unknown> = {},
+): MockResponse {
   const response: MockResponse = {
     statusCode: 200,
     body: undefined,
     ended: false,
+    locals,
     status(code: number) {
       response.statusCode = code;
       return response;
@@ -96,10 +100,14 @@ async function callRoute(
   router: Router,
   method: RouteMethod,
   path: string,
-  options: { body?: unknown; params?: Record<string, string> } = {},
+  options: {
+    body?: unknown;
+    params?: Record<string, string>;
+    locals?: Record<string, unknown>;
+  } = {},
 ) {
   const handler = getRouteHandler(router, method, path);
-  const response = createMockResponse();
+  const response = createMockResponse(options.locals ?? { sessionId: 'test-session' });
   const next = (error?: unknown) => {
     if (error) throw error;
   };
@@ -406,6 +414,51 @@ describe('locations API', () => {
       detail: 'Weather data is temporarily unavailable',
     });
     expect(forecastAreaFetchCount).toBe(1);
+  });
+
+  it('allows the same coordinates to be added by two different sessions', async () => {
+    const responseA = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+      locals: { sessionId: 'session-a' },
+    });
+    expect(responseA.statusCode).toBe(201);
+
+    const responseB = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+      locals: { sessionId: 'session-b' },
+    });
+    expect(responseB.statusCode).toBe(201);
+  });
+
+  it('delete in session A does not affect session B', async () => {
+    const createA = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+      locals: { sessionId: 'session-a' },
+    });
+    const createB = await callRoute(router, 'post', '/locations', {
+      body: { latitude: 1.35, longitude: 103.85 },
+      locals: { sessionId: 'session-b' },
+    });
+    const idA = (createA.body as { id: number }).id;
+    const idB = (createB.body as { id: number }).id;
+
+    await callRoute(router, 'delete', '/locations/:locationId', {
+      params: { locationId: String(idA) },
+      locals: { sessionId: 'session-a' },
+    });
+
+    const listB = await callRoute(router, 'get', '/locations', {
+      locals: { sessionId: 'session-b' },
+    });
+    expect(
+      (listB.body as { locations: unknown[] }).locations,
+    ).toHaveLength(1);
+
+    const getB = await callRoute(router, 'get', '/locations/:locationId', {
+      params: { locationId: String(idB) },
+      locals: { sessionId: 'session-b' },
+    });
+    expect(getB.statusCode).toBe(200);
   });
 
   it('returns 502 with a generic message when weather refresh fails', async () => {
