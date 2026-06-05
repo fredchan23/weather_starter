@@ -1,13 +1,10 @@
 import { useEffect, useId, useState } from 'react';
-import type { FormEvent } from 'react';
 import { fetchForecastAreas, logInteraction } from '../api';
+import { findDuplicateLocation } from '../locationHelpers';
+import { REGION_MAP, REGION_ORDER } from '../regionMap';
+import type { Region } from '../regionMap';
 import { useStore } from '../state/store';
-import {
-    findDuplicateLocation,
-    isWithinSingaporeBounds,
-    normalizeCoordinatePair,
-    selectNearestForecastArea,
-} from '../locationHelpers';
+import type { ForecastArea } from '../types';
 import { PlusIcon } from './icons';
 
 interface StatusMessage {
@@ -15,7 +12,11 @@ interface StatusMessage {
     message: string;
 }
 
-type LocationSource = 'geolocation' | 'manual';
+type AreasLoadState =
+    | { status: 'idle' }
+    | { status: 'loading' }
+    | { status: 'error' }
+    | { status: 'loaded'; areas: ForecastArea[] };
 
 const GEOLOCATION_OPTIONS = {
     enableHighAccuracy: false,
@@ -25,31 +26,68 @@ const GEOLOCATION_OPTIONS = {
 
 export function AddLocationForm() {
     const { locations, isAdding, setAdding, create, select } = useStore();
-    const [latitude, setLatitude] = useState('');
-    const [longitude, setLongitude] = useState('');
-    const [busyAction, setBusyAction] = useState<LocationSource | null>(null);
+    const [busyAction, setBusyAction] = useState<'geolocation' | 'area' | null>(null);
     const [status, setStatus] = useState<StatusMessage | null>(null);
+    const [selectedRegion, setSelectedRegion] = useState<Region | null>(null);
+    const [areasState, setAreasState] = useState<AreasLoadState>({ status: 'idle' });
     const statusId = useId();
 
     useEffect(() => {
         if (!status) return undefined;
-
-        const timeout = window.setTimeout(() => {
-            setStatus(null);
-        }, 5000);
-
+        const timeout = window.setTimeout(() => setStatus(null), 5000);
         return () => window.clearTimeout(timeout);
     }, [status]);
 
-    const cancelManual = () => {
-        setLatitude('');
-        setLongitude('');
+    const loadAreas = () => {
+        setAreasState({ status: 'loading' });
+        fetchForecastAreas()
+            .then((r) => setAreasState({ status: 'loaded', areas: r.areas }))
+            .catch(() => setAreasState({ status: 'error' }));
+    };
+
+    const openPicker = () => {
+        setAdding(true);
+        if (areasState.status !== 'loaded' && areasState.status !== 'loading') {
+            loadAreas();
+        }
+    };
+
+    const cancel = () => {
+        setSelectedRegion(null);
         setStatus(null);
         setAdding(false);
     };
 
-    const showStatus = (nextStatus: StatusMessage | null) => {
-        setStatus(nextStatus);
+    const retryLoadAreas = () => loadAreas();
+
+    const handleAreaSelect = async (area: ForecastArea) => {
+        if (busyAction) return;
+
+        const duplicate = findDuplicateLocation(locations, area);
+        if (duplicate) {
+            select(duplicate.id);
+            setStatus({
+                tone: 'info',
+                message: `Already saved. Showing ${duplicate.weather.area ?? area.name}.`,
+            });
+            logInteraction('location_duplicate_selected', { source: 'picker' });
+            return;
+        }
+
+        setBusyAction('area');
+        logInteraction('location_picker_area_selected', { area: area.name });
+        try {
+            await create({ latitude: area.latitude, longitude: area.longitude });
+            setStatus({ tone: 'success', message: `Added ${area.name}.` });
+        } catch (error) {
+            setStatus({
+                tone: 'error',
+                message: error instanceof Error ? error.message : 'Could not add location.',
+            });
+            logInteraction('location_create_failed', { reason: 'create_failed', source: 'picker' });
+        } finally {
+            setBusyAction(null);
+        }
     };
 
     const getCurrentPosition = () =>
@@ -57,151 +95,65 @@ export function AddLocationForm() {
             navigator.geolocation.getCurrentPosition(resolve, reject, GEOLOCATION_OPTIONS);
         });
 
-    const resolveAndCreate = async (
-        input: { latitude: number; longitude: number },
-        source: LocationSource,
-    ) => {
-        const normalizedInput = normalizeCoordinatePair(input);
-        const resolvedAreas = await fetchForecastAreas().catch(() => null);
-        const snappedArea = resolvedAreas?.areas.length
-            ? selectNearestForecastArea(
-                resolvedAreas.areas,
-                input.latitude,
-                input.longitude,
-            )
-            : null;
-        const normalizedCoordinates = snappedArea
-            ? normalizeCoordinatePair(snappedArea)
-            : normalizedInput;
-        const resolvedEvent =
-            source === 'geolocation'
-                ? 'location_geolocation_resolved'
-                : 'location_manual_resolved';
-        const duplicate = findDuplicateLocation(locations, normalizedCoordinates);
-
-        logInteraction(resolvedEvent, {
-            duplicatePrechecked: true,
-            usedStaleAreas: resolvedAreas?.stale ?? false,
-            usedRawFallback: !snappedArea,
-            snappedArea: snappedArea?.name ?? null,
-        });
-
-        if (duplicate) {
-            select(duplicate.id);
-            showStatus({
-                tone: 'info',
-                message: `Already saved. Showing ${duplicate.weather.area ?? 'the existing location'}.`,
-            });
-            logInteraction('location_duplicate_selected', {
-                duplicatePrechecked: true,
-                usedStaleAreas: resolvedAreas?.stale ?? false,
-                usedRawFallback: !snappedArea,
-            });
-            return;
-        }
-
-        if (!resolvedAreas?.areas.length && !isWithinSingaporeBounds(normalizedCoordinates)) {
-            showStatus({
-                tone: 'error',
-                message:
-                    source === 'manual'
-                        ? 'Forecast areas are unavailable and these coordinates are outside Singapore.'
-                        : 'Could not resolve your location outside Singapore.',
-            });
-            logInteraction('location_create_failed', {
-                reason: 'areas_unavailable_out_of_bounds',
-                source,
-                usedRawFallback: true,
-            });
-            return;
-        }
-
-        try {
-            await create(normalizedCoordinates);
-            showStatus({
-                tone: 'success',
-                message: snappedArea
-                    ? `Added ${snappedArea.name} from your ${source === 'geolocation' ? 'device location' : 'coordinates'}.`
-                    : 'Added your location and used the coordinates as entered.',
-            });
-        } catch (error) {
-            showStatus({
-                tone: 'error',
-                message:
-                    error instanceof Error ? error.message : 'Could not add location.',
-            });
-            logInteraction('location_create_failed', {
-                reason: 'create_failed',
-                source,
-                usedRawFallback: !snappedArea,
-            });
-        }
-    };
-
     const handleUseMyLocation = async () => {
         if (busyAction) return;
         if (typeof navigator === 'undefined' || !navigator.geolocation) {
-            showStatus({
+            setStatus({
                 tone: 'error',
-                message: 'Geolocation is not available in this browser. Use manual coordinates instead.',
+                message: 'Geolocation is not available in this browser.',
             });
             logInteraction('location_geolocation_failed', { reason: 'unsupported' });
             return;
         }
 
         setBusyAction('geolocation');
-        showStatus({ tone: 'info', message: 'Finding your location…' });
+        setStatus({ tone: 'info', message: 'Finding your location…' });
         logInteraction('location_geolocation_clicked');
 
         try {
             const position = await getCurrentPosition();
-            await resolveAndCreate(
-                {
-                    latitude: position.coords.latitude,
-                    longitude: position.coords.longitude,
-                },
-                'geolocation',
-            );
+            const { latitude, longitude } = position.coords;
+
+            const resolvedAreas = await fetchForecastAreas().catch(() => null);
+            const snappedArea = resolvedAreas?.areas.length
+                ? resolvedAreas.areas.reduce((nearest, area) => {
+                    const d = (area.latitude - latitude) ** 2 + (area.longitude - longitude) ** 2;
+                    const nd = (nearest.latitude - latitude) ** 2 + (nearest.longitude - longitude) ** 2;
+                    return d < nd ? area : nearest;
+                })
+                : null;
+
+            const coords = snappedArea
+                ? { latitude: snappedArea.latitude, longitude: snappedArea.longitude }
+                : { latitude: Number(latitude.toFixed(4)), longitude: Number(longitude.toFixed(4)) };
+
+            const duplicate = findDuplicateLocation(locations, coords);
+            if (duplicate) {
+                select(duplicate.id);
+                setStatus({
+                    tone: 'info',
+                    message: `Already saved. Showing ${duplicate.weather.area ?? 'the existing location'}.`,
+                });
+                logInteraction('location_duplicate_selected', { source: 'geolocation' });
+                return;
+            }
+
+            logInteraction('location_geolocation_resolved', {
+                snappedArea: snappedArea?.name ?? null,
+                usedRawFallback: !snappedArea,
+            });
+
+            await create(coords);
+            setStatus({
+                tone: 'success',
+                message: snappedArea
+                    ? `Added ${snappedArea.name} from your device location.`
+                    : 'Added your location.',
+            });
         } catch (error) {
             const reason = geolocationFailureReason(error);
-            showStatus({
-                tone: 'error',
-                message: geolocationFailureMessage(reason),
-            });
-            logInteraction('location_geolocation_failed', {
-                reason,
-                duplicatePrechecked: true,
-            });
-        } finally {
-            setBusyAction(null);
-        }
-    };
-
-    const onSubmit = async (event: FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (busyAction) return;
-
-        const latitudeValue = Number(latitude);
-        const longitudeValue = Number(longitude);
-        if (!Number.isFinite(latitudeValue) || !Number.isFinite(longitudeValue)) {
-            showStatus({
-                tone: 'error',
-                message: 'Enter valid latitude and longitude values.',
-            });
-            return;
-        }
-
-        setBusyAction('manual');
-        setStatus(null);
-        logInteraction('location_manual_submitted');
-
-        try {
-            await resolveAndCreate(
-                { latitude: latitudeValue, longitude: longitudeValue },
-                'manual',
-            );
-            setLatitude('');
-            setLongitude('');
+            setStatus({ tone: 'error', message: geolocationFailureMessage(reason) });
+            logInteraction('location_geolocation_failed', { reason });
         } finally {
             setBusyAction(null);
         }
@@ -222,11 +174,11 @@ export function AddLocationForm() {
                 </button>
                 <button
                     type="button"
-                    onClick={() => setAdding(true)}
+                    onClick={openPicker}
                     disabled={busyAction !== null}
                     className="rounded-2xl border border-white/10 bg-white/[0.05] px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/[0.09] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    Add coordinates manually
+                    Add location
                 </button>
                 <StatusBanner status={status} id={statusId} />
             </div>
@@ -234,93 +186,114 @@ export function AddLocationForm() {
     }
 
     return (
-        <form
-            onSubmit={onSubmit}
-            aria-busy={busyAction !== null}
+        <div
             aria-describedby={status ? statusId : undefined}
-            className="grid gap-2.5 rounded-2xl border border-white/15 bg-white/[0.1] p-3 backdrop-blur-xl"
+            className="grid gap-3 rounded-2xl border border-white/15 bg-white/[0.1] p-3 backdrop-blur-xl"
         >
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
-                        Manual coordinates
-                    </p>
-                    <p className="mt-1 text-[11px] text-white/55">
-                        We still snap to the nearest forecast area when metadata is available.
-                    </p>
-                </div>
+            <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/60">
+                    Pick an area
+                </p>
                 <button
                     type="button"
                     onClick={handleUseMyLocation}
                     disabled={busyAction !== null}
-                    className="w-full rounded-full border border-white/15 bg-white/[0.08] px-3 py-1.5 text-[11px] font-medium text-white/80 transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                    className="rounded-full border border-white/15 bg-white/[0.08] px-3 py-1 text-[11px] font-medium text-white/80 transition hover:bg-white/[0.12] disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                    Use my location
+                    {busyAction === 'geolocation' ? 'Finding…' : 'Use my location'}
                 </button>
             </div>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                <label className="grid min-w-0 gap-1">
-                    <span className="text-[11px] text-white/60">Latitude</span>
-                    <input
-                        type="number"
-                        step="any"
-                        value={latitude}
-                        onChange={(e) => setLatitude(e.target.value)}
-                        placeholder="1.3508"
-                        required
-                        className="w-full min-w-0 rounded-md border border-white/15 bg-white/10 px-2 py-1.5 text-sm text-white placeholder:text-white/40"
-                    />
-                </label>
-                <label className="grid min-w-0 gap-1">
-                    <span className="text-[11px] text-white/60">Longitude</span>
-                    <input
-                        type="number"
-                        step="any"
-                        value={longitude}
-                        onChange={(e) => setLongitude(e.target.value)}
-                        placeholder="103.8390"
-                        required
-                        className="w-full min-w-0 rounded-md border border-white/15 bg-white/10 px-2 py-1.5 text-sm text-white placeholder:text-white/40"
-                    />
-                </label>
-            </div>
-            <div className="flex flex-wrap items-center justify-end gap-2">
+
+            {areasState.status === 'loading' && (
+                <p className="py-2 text-center text-xs text-white/50">Loading areas…</p>
+            )}
+
+            {areasState.status === 'error' && (
+                <div className="grid gap-2 py-1 text-center">
+                    <p className="text-xs text-white/60">Could not load forecast areas.</p>
+                    <button
+                        type="button"
+                        onClick={retryLoadAreas}
+                        className="mx-auto rounded-md border border-white/15 bg-white/[0.08] px-3 py-1.5 text-xs font-medium text-white/80 transition hover:bg-white/[0.12]"
+                    >
+                        Retry
+                    </button>
+                </div>
+            )}
+
+            {areasState.status === 'loaded' && (
+                <>
+                    <div
+                        role="group"
+                        aria-label="Region"
+                        className="flex flex-wrap gap-1.5"
+                    >
+                        {REGION_ORDER.map((region) => (
+                            <button
+                                key={region}
+                                type="button"
+                                onClick={() => setSelectedRegion(region === selectedRegion ? null : region)}
+                                aria-pressed={selectedRegion === region}
+                                className={`rounded-full border px-3 py-1 text-[11px] font-semibold transition ${
+                                    selectedRegion === region
+                                        ? 'border-white/40 bg-white/25 text-white'
+                                        : 'border-white/15 bg-white/[0.07] text-white/70 hover:bg-white/[0.12] hover:text-white'
+                                }`}
+                            >
+                                {region}
+                            </button>
+                        ))}
+                    </div>
+
+                    {selectedRegion && (
+                        <ul
+                            aria-label={`Areas in ${selectedRegion}`}
+                            className="flex flex-wrap gap-1.5"
+                        >
+                            {REGION_MAP[selectedRegion].map((areaName) => {
+                                const area = areasState.areas.find((a) => a.name === areaName);
+                                if (!area) return null;
+                                return (
+                                    <li key={areaName}>
+                                        <button
+                                            type="button"
+                                            onClick={() => void handleAreaSelect(area)}
+                                            disabled={busyAction !== null}
+                                            className="rounded-lg border border-white/15 bg-white/[0.08] px-2.5 py-1 text-xs text-white/85 transition hover:border-white/30 hover:bg-white/[0.15] hover:text-white disabled:cursor-not-allowed disabled:opacity-60"
+                                        >
+                                            {areaName}
+                                        </button>
+                                    </li>
+                                );
+                            })}
+                        </ul>
+                    )}
+                </>
+            )}
+
+            <div className="flex justify-end">
                 <button
                     type="button"
-                    onClick={cancelManual}
+                    onClick={cancel}
                     className="rounded-md px-2.5 py-1.5 text-xs font-medium text-white/70 transition hover:text-white"
                 >
                     Cancel
                 </button>
-                <button
-                    type="submit"
-                    disabled={busyAction !== null}
-                    className="rounded-md bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-900 transition hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                    {busyAction === 'manual' ? 'Adding…' : 'Add location'}
-                </button>
             </div>
+
             <StatusBanner status={status} id={statusId} />
-        </form>
+        </div>
     );
 }
 
-function StatusBanner({
-    status,
-    id,
-}: {
-    status: StatusMessage | null;
-    id: string;
-}) {
+function StatusBanner({ status, id }: { status: StatusMessage | null; id: string }) {
     if (!status) return null;
-
     const toneClasses =
         status.tone === 'error'
             ? 'border-red-300/25 bg-red-500/15 text-red-50'
             : status.tone === 'success'
                 ? 'border-emerald-300/25 bg-emerald-500/15 text-emerald-50'
                 : 'border-white/15 bg-white/[0.08] text-white/75';
-
     return (
         <p
             id={id}
@@ -337,9 +310,7 @@ function StatusBanner({
 function geolocationFailureReason(
     error: unknown,
 ): 'permission_denied' | 'position_unavailable' | 'timeout' | 'unsupported' | 'unknown' {
-    if (typeof navigator === 'undefined' || !navigator.geolocation) {
-        return 'unsupported';
-    }
+    if (typeof navigator === 'undefined' || !navigator.geolocation) return 'unsupported';
     if (error && typeof error === 'object' && 'code' in error) {
         const code = Number((error as GeolocationPositionError).code);
         if (code === 1) return 'permission_denied';
@@ -353,15 +324,10 @@ function geolocationFailureMessage(
     reason: 'permission_denied' | 'position_unavailable' | 'timeout' | 'unsupported' | 'unknown',
 ): string {
     switch (reason) {
-        case 'permission_denied':
-            return 'Location permission was denied. Use manual coordinates instead.';
-        case 'position_unavailable':
-            return 'Your location could not be determined. Try again or add coordinates manually.';
-        case 'timeout':
-            return 'Location lookup timed out. Try again or use manual coordinates instead.';
-        case 'unsupported':
-            return 'Geolocation is not available in this browser. Use manual coordinates instead.';
-        default:
-            return 'Could not determine your location. Use manual coordinates instead.';
+        case 'permission_denied': return 'Location permission was denied.';
+        case 'position_unavailable': return 'Your location could not be determined. Try again or pick an area.';
+        case 'timeout': return 'Location lookup timed out. Try again or pick an area.';
+        case 'unsupported': return 'Geolocation is not available in this browser.';
+        default: return 'Could not determine your location. Pick an area instead.';
     }
 }
