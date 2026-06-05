@@ -2,6 +2,12 @@ import type { ForecastArea, Location } from './types';
 
 const COORDINATE_PRECISION = 4;
 
+export const CENTRAL_DEFAULT = {
+  latitude: 1.3048,
+  longitude: 103.8318,
+  label: 'Central',
+} as const;
+
 export function normalizeCoordinate(value: number): number {
   return Number(value.toFixed(COORDINATE_PRECISION));
 }

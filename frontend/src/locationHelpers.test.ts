@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CENTRAL_DEFAULT,
   findDuplicateLocation,
   isWithinSingaporeBounds,
   normalizeCoordinate,
@@ -7,6 +8,21 @@ import {
   selectNearestForecastArea,
 } from './locationHelpers';
 import type { Location } from './types';
+
+describe('CENTRAL_DEFAULT', () => {
+  it('is within Singapore bounds', () => {
+    expect(isWithinSingaporeBounds(CENTRAL_DEFAULT)).toBe(true);
+  });
+
+  it('has the Orchard-area coordinates', () => {
+    expect(CENTRAL_DEFAULT.latitude).toBe(1.3048);
+    expect(CENTRAL_DEFAULT.longitude).toBe(103.8318);
+  });
+
+  it('has the label Central', () => {
+    expect(CENTRAL_DEFAULT.label).toBe('Central');
+  });
+});
 
 describe('normalizeCoordinate', () => {
   it('rounds to 4 decimal places', () => {
