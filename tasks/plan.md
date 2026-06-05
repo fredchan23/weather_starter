@@ -27,15 +27,15 @@ Two independent features delivered in sequence. First: add per-browser session i
 **Description:** Edit `backend/src/schema.ts` to add `session_id` to the Drizzle table and change the unique index. Then generate and apply the migration.
 
 **Acceptance criteria:**
-- [ ] `sessionId: text('session_id').notNull().default('legacy')` added to the `locations` table
-- [ ] Unique index updated from `(latitude, longitude)` to `(session_id, latitude, longitude)`
-- [ ] `npm run db:generate` produces a new `.sql` file in `backend/drizzle/`
-- [ ] `npm run db:migrate` applies without error
+- [x] `sessionId: text('session_id').notNull().default('legacy')` added to the `locations` table
+- [x] Unique index updated from `(latitude, longitude)` to `(session_id, latitude, longitude)`
+- [x] `npm run db:generate` produces a new `.sql` file in `backend/drizzle/`
+- [x] `npm run db:migrate` applies without error
 
 **Verification:**
-- [ ] `npm run db:generate` exits 0
-- [ ] `npm run db:migrate` exits 0
-- [ ] `npm run build` exits 0
+- [x] `npm run db:generate` exits 0
+- [x] `npm run db:migrate` exits 0
+- [x] `npm run build` exits 0
 
 **Dependencies:** None
 
