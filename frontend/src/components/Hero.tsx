@@ -1,6 +1,8 @@
 import { useStore, useSelectedLocation } from '../state/store';
+import { useGeoUpgrade } from '../state/useGeoUpgrade';
 import { LocationIcon, RefreshIcon } from './icons';
 import { HourlyStrip } from './HourlyStrip';
+import { LocationBanner } from './LocationBanner';
 import { TenDayForecast } from './TenDayForecast';
 import { TileGrid } from './Tiles';
 import { MapCard } from './MapCard';
@@ -9,6 +11,7 @@ import type { ForecastPeriod } from '../types';
 
 export function Hero() {
   const { locations, refresh, refreshingId } = useStore();
+  const handleGeoUpgrade = useGeoUpgrade();
   const selected = useSelectedLocation();
 
   if (!selected) {
@@ -69,6 +72,7 @@ export function Hero() {
   return (
     <main className="min-w-0 flex-1 overflow-y-auto">
       <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 pb-6 pt-3 sm:px-6 sm:pb-8 sm:pt-4 lg:gap-4 lg:p-8">
+        <LocationBanner onUseLocation={() => void handleGeoUpgrade()} />
         <header className="flex flex-col items-center px-2 pb-2 pt-2 text-center sm:px-4 sm:pt-6">
           {isHome && (
             <div className="mb-2 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-white/70">

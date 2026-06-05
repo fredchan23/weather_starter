@@ -5,6 +5,7 @@ import {
   isWithinSingaporeBounds,
   normalizeCoordinate,
   normalizeCoordinatePair,
+  resolveGeoUpgrade,
   selectNearestForecastArea,
 } from './locationHelpers';
 import type { Location } from './types';
@@ -167,5 +168,26 @@ describe('findDuplicateLocation', () => {
     // After normalization both sides resolve to 1.352, 103.848
     const result = findDuplicateLocation(stored, { latitude: 1.352, longitude: 103.848 });
     expect(result?.id).toBe(3);
+  });
+});
+
+describe('resolveGeoUpgrade', () => {
+  const areas = [
+    { name: 'Orchard', latitude: 1.3048, longitude: 103.8318 },
+    { name: 'Jurong West', latitude: 1.34, longitude: 103.7 },
+    { name: 'Changi', latitude: 1.357, longitude: 103.988 },
+  ];
+
+  it('returns the nearest area for in-bounds coords', () => {
+    const result = resolveGeoUpgrade(areas, 1.305, 103.832);
+    expect(result?.name).toBe('Orchard');
+  });
+
+  it('returns null when areas is empty', () => {
+    expect(resolveGeoUpgrade([], 1.305, 103.832)).toBeNull();
+  });
+
+  it('returns null for out-of-Singapore coords', () => {
+    expect(resolveGeoUpgrade(areas, 3.14, 101.69)).toBeNull();
   });
 });

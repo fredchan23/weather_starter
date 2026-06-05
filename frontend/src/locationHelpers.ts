@@ -52,6 +52,15 @@ export function selectNearestForecastArea(
   return nearest?.area ?? null;
 }
 
+export function resolveGeoUpgrade(
+  areas: ForecastArea[],
+  latitude: number,
+  longitude: number,
+): ForecastArea | null {
+  if (!isWithinSingaporeBounds({ latitude, longitude })) return null;
+  return selectNearestForecastArea(areas, latitude, longitude);
+}
+
 export function findDuplicateLocation(
   locations: Location[],
   coordinates: { latitude: number; longitude: number },
