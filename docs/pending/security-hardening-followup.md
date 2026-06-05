@@ -2,7 +2,7 @@
 
 **Source:** Code review (7 findings) + CSA Cyber Health Check scan (weather.assurecraft.org, 2026-06-01, score 58%)
 **Branch reviewed:** `main` (commit `5555539`)
-**Status:** Phase 1 ✅ complete (`fdcd0df`–`d4371e7`) · Phase 2 ✅ complete (`b544bc8`–`fa72b25`) · Phase 3 pending (Cloudflare/registrar, no code)
+**Status:** Phase 1 ✅ complete (`fdcd0df`–`d4371e7`) · Phase 2 ✅ complete (`b544bc8`–`fa72b25`) · Phase 3 ✅ complete (Cloudflare/registrar free-tier, 2026-06-05)
 
 ---
 

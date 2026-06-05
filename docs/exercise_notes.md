@@ -4,6 +4,16 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-05 | branch `main` | commit `17da7d6` | checkpoint — security hardening Phase 3 complete (Cloudflare/registrar free tier)
+
+- status: implemented
+- implementation request: Close out Phase 3 of the security hardening plan (docs/pending/security-hardening-followup.md) — infrastructure-only items applied to the live site at https://weather.assurecraft.org/ via Cloudflare and domain registrar dashboards.
+- implementation challenges: Free-tier Cloudflare does not expose cipher suite selection (requires Business plan); TLS 1.0/1.1 disable, HSTS, and DNSSEC are available and applied. BREACH mitigation and session ticket key rotation are Cloudflare-managed with no free-tier override.
+- scope: Cloudflare SSL/TLS settings, registrar DNSSEC config, `docs/pending/security-hardening-followup.md` (Phase 3 status updated).
+- decisions: Applied all free-tier-reachable controls (minimum TLS 1.2, HSTS, DNSSEC). Accepted remaining gaps (cipher suite selection, BREACH, EV cert) as out of scope for free tier — documented and closed.
+- verification: Live site reachable at https://weather.assurecraft.org/ with HTTPS. Phase 3 marked complete in security-hardening-followup.md.
+- follow-up: Cipher suite hardening and BREACH mitigation require Cloudflare Business plan if needed in future.
+
 ## 2026-06-01 | branch `main` | commits `fdcd0df`–`fa72b25` | security hardening Phase 1 + Phase 2
 
 - status: implemented
