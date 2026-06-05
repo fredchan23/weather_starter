@@ -4,6 +4,24 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-05 | branch `main` | commits `a7a832d`–`cda9e0e` | region→area picker (Checkpoint 2)
+
+- status: implemented
+- implementation request: Phase 2, Tasks 5 & 6 — replace lat/lon manual-entry form with a region → area picker. Create `regionMap.ts` with `REGION_ORDER`/`REGION_MAP`, then rewrite `AddLocationForm.tsx` to use it.
+- implementation challenges:
+  - ESLint rule `react-hooks/set-state-in-effect` rejected a `useEffect` that set loading state synchronously before kicking off the fetch. Resolved by moving area-load initiation into the "Add location" button's click handler (`openPicker`) instead of an effect — cleaner architecture that avoids cascading renders.
+  - No jsdom / React Testing Library configured (`vitest` uses `environment: 'node'`), so component tests are not possible without a new setup. Task 6 TDD "test" is the TypeScript compiler + linter as the RED/GREEN gate; manual dev-server testing is the functional gate for Checkpoint 2.
+- scope: `frontend/src/regionMap.ts` (new), `frontend/src/regionMap.test.ts` (new), `frontend/src/components/AddLocationForm.tsx`.
+- decisions:
+  - Task 5: grouped 47 live API areas into 6 regions (North, North-East, East, Central, West, South) matching Singapore's planning regions. `REGION_ORDER` drives display order; `REGION_MAP` keys are typed as `Region` (const union). Test verifies full coverage and no duplicates against the live area list.
+  - Task 6: removed manual lat/lon inputs and `onSubmit` entirely. Picker loads forecast areas on `openPicker` click (not on mount), so areas are always current. Duplicate detection and geolocation path are preserved. `retryLoadAreas` re-triggers the same fetch on error. Area chips map names back to `ForecastArea` objects from the loaded response so coordinates are authoritative.
+- verification:
+  - `npm test` — **60/60 pass** (5 new regionMap tests + 55 pre-existing)
+  - `npm run build` — clean
+  - `npm run lint` — 0 errors (1 pre-existing store.tsx warning, unrelated)
+  - Manual Checkpoint 2 (pending): two browsers, independent lists, picker + geolocation both work.
+- follow-up: Manual end-to-end verification in two browsers (independent session lists, picker golden path, geolocation, duplicate handling, cancel).
+
 ## 2026-06-05 | branch `main` | commits `71b7771`–`5454ed3` | per-browser session isolation (Checkpoint 1)
 
 - status: implemented
