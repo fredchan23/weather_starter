@@ -1,0 +1,72 @@
+export const REGION_ORDER = [
+  'North',
+  'North-East',
+  'East',
+  'Central',
+  'West',
+  'South',
+] as const;
+
+export type Region = (typeof REGION_ORDER)[number];
+
+export const REGION_MAP: Record<Region, string[]> = {
+  North: [
+    'Central Water Catchment',
+    'Lim Chu Kang',
+    'Mandai',
+    'Seletar',
+    'Sembawang',
+    'Sungei Kadut',
+    'Woodlands',
+    'Yishun',
+  ],
+  'North-East': [
+    'Ang Mo Kio',
+    'Bishan',
+    'Hougang',
+    'Punggol',
+    'Sengkang',
+    'Serangoon',
+  ],
+  East: [
+    'Bedok',
+    'Changi',
+    'Pasir Ris',
+    'Paya Lebar',
+    'Pulau Tekong',
+    'Pulau Ubin',
+    'Tampines',
+  ],
+  Central: [
+    'Bukit Merah',
+    'Bukit Timah',
+    'City',
+    'Geylang',
+    'Kallang',
+    'Marine Parade',
+    'Novena',
+    'Queenstown',
+    'Tanglin',
+    'Toa Payoh',
+  ],
+  West: [
+    'Boon Lay',
+    'Bukit Batok',
+    'Bukit Panjang',
+    'Choa Chu Kang',
+    'Clementi',
+    'Jalan Bahar',
+    'Jurong East',
+    'Jurong Island',
+    'Jurong West',
+    'Pioneer',
+    'Tengah',
+    'Tuas',
+    'Western Islands',
+    'Western Water Catchment',
+  ],
+  South: [
+    'Sentosa',
+    'Southern Islands',
+  ],
+};
