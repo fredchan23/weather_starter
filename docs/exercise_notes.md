@@ -4,6 +4,27 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-05 | branch `main` | commits `71b7771`–`5454ed3` | per-browser session isolation (Checkpoint 1)
+
+- status: implemented
+- implementation request: Add per-browser session isolation so each browser maintains an independent location list. Tasks 1–4 from `tasks/todo.md` (Phase 1).
+- implementation challenges:
+  - `npm run db:migrate` (drizzle-kit) cannot connect to the Node built-in `node:sqlite` driver — it requires `better-sqlite3` or `@libsql/client`. Migrations are applied automatically at startup via the `migrate()` call in `db.ts`, so `db:generate` is sufficient and the drizzle-kit migrate step is a no-op in this project.
+  - The `server.test.ts` integration test makes two separate HTTP requests (POST then GET) without carrying cookies; after session middleware landed, each request received a fresh UUID and the GET saw an empty list. Fixed by extracting the `wsid` Set-Cookie header from the POST response and forwarding it to the GET.
+  - TypeScript typed `supertest` response headers as flat `string`, so `as string[]` was rejected; worked around with an `Array.isArray` branch.
+- scope: `backend/src/schema.ts`, `backend/drizzle/0001_luxuriant_anita_blake.sql`, `backend/drizzle/meta/`, `backend/src/db.ts`, `backend/src/routes/locations.ts`, `backend/src/routes/locations.test.ts`, `backend/src/server.ts`, `backend/src/server.test.ts`.
+- decisions:
+  - Task 1: added `session_id text NOT NULL DEFAULT 'legacy'` column; replaced `(latitude, longitude)` unique index with `(session_id, latitude, longitude)`.
+  - Task 2: all five DB helpers (`listLocations`, `createLocation`, `getLocation`, `deleteLocation`, `updateWeather`) now accept `sessionId` and scope every query to it — prevents cross-session reads and deletes by ID-guessing.
+  - Task 3: `sessionMiddleware` in `server.ts` reads the `wsid` cookie, validates it as a UUID, generates a new one if absent or invalid, sets it `httpOnly + sameSite=lax + maxAge 1 year`, and writes `res.locals.sessionId` for all downstream handlers. No third-party cookie-parser dependency — manual header parsing is sufficient for a single cookie key.
+  - Task 4 (TDD): wrote failing tests first (RED — 2 new tests fail, 53 existing pass), then implemented Tasks 2 & 3 (GREEN — all 55 pass). `callRoute` defaults `locals` to `{ sessionId: 'test-session' }` so existing tests required no per-call changes.
+- verification:
+  - `npm test` — **55/55 pass** (53 pre-existing + 2 new session-isolation tests)
+  - `npm run build` — clean (frontend + backend TS)
+  - `npm run doctor` — healthy (`/health` and `/api/locations` smoke-test pass)
+  - Manual Checkpoint 1 Item 4 — two browsers side by side (Arctic Glass theme: Seletar 32°; Botanical Garden theme: City 30°) show fully independent location lists, confirming `wsid` cookie isolation end-to-end.
+- follow-up: Phase 2 (Tasks 5 & 6) — region → area picker frontend (`regionMap.ts` + rewrite `AddLocationForm.tsx`).
+
 ## 2026-06-05 | branch `main` | commit `17da7d6` | checkpoint — security hardening Phase 3 complete (Cloudflare/registrar free tier)
 
 - status: implemented
