@@ -29,9 +29,11 @@ Single Node process: Express handles `/api/*` and a `/health` route; Vite middle
 | File | Purpose |
 |---|---|
 | `backend/src/schema.ts` | `WeatherSnapshot` interface + Drizzle table — source of truth for data shape |
-| `backend/src/db.ts` | SQLite helpers (`createLocation`, `updateWeather`, `deleteLocation`, …) |
+| `backend/src/db.ts` | SQLite helpers (`createLocation`, `updateWeather`, `deleteLocation`, …) — all scoped to `sessionId` |
+| `backend/src/server.ts` | Express app factory; `sessionMiddleware` reads/generates `wsid` cookie → `res.locals.sessionId` |
 | `backend/src/weather.ts` | `SingaporeWeatherClient` — fetches and composes data.gov.sg readings into `WeatherSnapshot` |
 | `backend/src/routes/locations.ts` | Express routes; accepts injectable `WeatherClient` for testing |
+| `frontend/src/regionMap.ts` | `REGION_ORDER` + `REGION_MAP` — groups all 47 forecast areas into 6 Singapore regions |
 | `frontend/src/state/store.tsx` | React Context store (locations, selectedId, loading/error state) |
 | `frontend/src/api.ts` | Frontend fetch helpers for `/api/*` |
 | `frontend/src/types.ts` | Shared frontend types (`Location`, `WeatherSnapshot`, …) |
