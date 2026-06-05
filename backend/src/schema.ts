@@ -39,6 +39,7 @@ export const locations = sqliteTable(
   'locations',
   {
     id: integer('id').primaryKey({ autoIncrement: true }),
+    sessionId: text('session_id').notNull().default('legacy'),
     latitude: real('latitude').notNull(),
     longitude: real('longitude').notNull(),
     createdAt: text('created_at').notNull(),
@@ -66,7 +67,8 @@ export const locations = sqliteTable(
       .notNull(),
   },
   (table) => [
-    uniqueIndex('locations_latitude_longitude_unique').on(
+    uniqueIndex('locations_session_latitude_longitude_unique').on(
+      table.sessionId,
       table.latitude,
       table.longitude,
     ),
