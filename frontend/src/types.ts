@@ -65,6 +65,9 @@ export interface StoreValue {
   isLoading: boolean;
   refreshingId: number | null;
   error: unknown;
+  isCentralDefault: boolean;
+  centralDefaultId: number | null;
+  clearCentralDefault: () => void;
   select: (id: number | null) => void;
   setAdding: (isAdding: boolean) => void;
   create: (payload: CreateLocationPayload) => Promise<void>;

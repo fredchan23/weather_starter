@@ -13,6 +13,7 @@ import {
   refreshLocation,
   logInteraction,
 } from '../api';
+import { CENTRAL_DEFAULT } from '../locationHelpers';
 import type {
   CreateLocationPayload,
   Location,
@@ -29,6 +30,8 @@ export function StoreProvider({ children }: ProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [refreshingId, setRefreshingId] = useState<number | null>(null);
   const [error, setError] = useState<unknown>(null);
+  const [isCentralDefault, setIsCentralDefault] = useState(false);
+  const [centralDefaultId, setCentralDefaultId] = useState<number | null>(null);
   const didAutoRefreshOnMount = useRef(false);
 
   const load = useCallback(async (): Promise<Location[]> => {
@@ -49,9 +52,21 @@ export function StoreProvider({ children }: ProviderProps) {
     if (didAutoRefreshOnMount.current) return;
     didAutoRefreshOnMount.current = true;
 
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- load-on-mount syncs API → React state
-    load().then((next) => {
-      if (next.length === 0) return;
+    load().then(async (next) => {
+      if (next.length === 0) {
+        try {
+          const created = await createLocation(CENTRAL_DEFAULT);
+          setIsCentralDefault(true);
+          setCentralDefaultId(created?.id ?? null);
+          const fresh = await load();
+          const targetId = created?.id ?? fresh[0]?.id;
+          if (targetId) setSelectedId(targetId);
+          if (targetId) void refreshLocation(targetId).then(() => load()).catch(() => {});
+        } catch {
+          // silent — user sees empty state
+        }
+        return;
+      }
 
       const targetId = next[0].id;
       setSelectedId((current) => current ?? targetId);
@@ -142,6 +157,11 @@ export function StoreProvider({ children }: ProviderProps) {
     [load],
   );
 
+  const clearCentralDefault = useCallback(() => {
+    setIsCentralDefault(false);
+    setCentralDefaultId(null);
+  }, []);
+
   const value: StoreValue = {
     locations,
     selectedId: effectiveSelectedId,
@@ -149,6 +169,9 @@ export function StoreProvider({ children }: ProviderProps) {
     isLoading,
     refreshingId,
     error,
+    isCentralDefault,
+    centralDefaultId,
+    clearCentralDefault,
     select: setSelectedId,
     setAdding: (nextIsAdding) => {
       setIsAdding(nextIsAdding);
