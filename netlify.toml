@@ -4,7 +4,12 @@
   functions = "netlify/functions"
 
 [build.environment]
-  NODE_VERSION = "24"
+  # Node 22 is the newest runtime supported by Netlify Functions (Lambda). The app
+  # no longer uses node:sqlite, so it no longer needs Node 24.
+  NODE_VERSION = "22"
+  # NODE_ENV=production (set for the function runtime) would otherwise make npm
+  # skip devDependencies, but the build needs them (typescript, vite, etc.).
+  NPM_FLAGS = "--include=dev"
 
 [functions]
   node_bundler = "esbuild"

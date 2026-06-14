@@ -4,7 +4,7 @@
   "version": "0.1.0",
   "type": "module",
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky || true",
     "dev": "node scripts/dev.mjs",
     "docs": "npm run dev --prefix docs-site",
     "format": "prettier --write .",
