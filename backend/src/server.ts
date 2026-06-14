@@ -2,7 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import pinoHttpModule from 'pino-http';
 import { createServer as createHttpServer } from 'node:http';
 import { randomUUID } from 'node:crypto';
@@ -27,6 +27,14 @@ interface AppOptions {
 export async function createApp(options: AppOptions = {}) {
   const app = express();
   const server = createHttpServer(app);
+
+  // On Netlify the app runs behind the platform proxy, so the real client IP and
+  // protocol arrive via forwarded headers. Trusting the proxy lets req.ip and
+  // req.secure resolve correctly (needed for rate limiting and secure cookies).
+  if (process.env.NODE_ENV === 'production') {
+    app.set('trust proxy', true);
+  }
+
   const serveFrontend =
     options.serveFrontend ?? process.env.NODE_ENV !== 'test';
   const enableRequestLogging =
@@ -57,7 +65,22 @@ export async function createApp(options: AppOptions = {}) {
     app.use(pinoHttp({ logger }));
   }
 
-  const limiterBase = { windowMs: 60_000, standardHeaders: 'draft-6' as const, legacyHeaders: false };
+  // Key on Netlify's trustworthy client-IP header when present (falling back to
+  // req.ip), normalizing IPv6 via the library helper. Disable the trust-proxy
+  // validation since we deliberately trust the Netlify proxy.
+  const clientIp = (request: express.Request): string =>
+    ipKeyGenerator(
+      (request.headers['x-nf-client-connection-ip'] as string) ||
+        request.ip ||
+        'unknown',
+    );
+  const limiterBase = {
+    windowMs: 60_000,
+    standardHeaders: 'draft-6' as const,
+    legacyHeaders: false,
+    keyGenerator: clientIp,
+    validate: { trustProxy: false },
+  };
   // General API limit: 120 req/min per IP
   const apiLimiter = rateLimit({ ...limiterBase, max: 120 });
   // Mutation limit: 10 req/min per IP (each refresh fans out to 10 upstream calls)
@@ -192,6 +215,7 @@ function sessionMiddleware(
     response.cookie('wsid', sessionId, {
       httpOnly: true,
       sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
       maxAge: 365 * 24 * 60 * 60 * 1000,
     });
   }

@@ -1,0 +1,35 @@
+[build]
+  command = "npm run build"
+  publish = "frontend/dist"
+  functions = "netlify/functions"
+
+[build.environment]
+  NODE_VERSION = "24"
+
+[functions]
+  node_bundler = "esbuild"
+  # - @libsql/client / libsql: native addon; ship the prebuilt binary unbundled.
+  # - vite: only referenced by server.ts's dev-only branch (serveFrontend:false in
+  #   the function, so it never runs); externalize to keep it out of the bundle.
+  external_node_modules = ["@libsql/client", "libsql", "vite"]
+
+# API and health checks are handled by the Express app running as a function.
+# Netlify preserves the original request path in the function event, so Express
+# still matches its /api/* and /health routes.
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/health"
+  to = "/.netlify/functions/api"
+  status = 200
+  force = true
+
+# SPA fallback — every other path serves the built React app. Must be last.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

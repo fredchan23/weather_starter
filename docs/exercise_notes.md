@@ -4,6 +4,21 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
+## 2026-06-14 | branch `main` | commit `d9c796c` (pre-commit) | migrate deployment target to Netlify + Turso
+
+- status: in progress
+- implementation request: Migrate both frontend and backend to deploy on Netlify, replacing the Google Compute Engine path. Add Turso (libSQL) as the hosted database and map the custom domain `https://weather.assurecraft.org` via Cloudflare.
+- implementation challenges:
+  - Netlify has no persistent server or filesystem, so the local SQLite file (`node:sqlite` + WAL) had to move to a hosted database. Chose Turso/libSQL because the schema is already SQLite — only the Drizzle driver in `db.ts` changed, no SQL dialect port.
+  - Migrations previously ran at module load on every import; under serverless that would run on every cold start. Split into auto-migrate for the local file (dev/tests) only, with `npm run db:migrate:remote` applying to Turso out-of-band.
+  - `express-rate-limit` threw `ERR_ERL_UNDEFINED_IP_ADDRESS` under serverless-http (no socket IP). Fixed with `trust proxy` in production plus a key generator that reads Netlify's `x-nf-client-connection-ip` header, normalized via `ipKeyGenerator`.
+  - esbuild statically pulled `vite` (and `lightningcss`) into the function bundle via `server.ts`'s dev-only `import('vite')` branch; externalized `vite` (and the native `@libsql/client`/`libsql`) in `netlify.toml`.
+- scope: `backend/src/db.ts`, `backend/src/server.ts`, `netlify/functions/api.ts` (new), `netlify.toml` (new), `scripts/migrate.mjs` (new), `package.json`, `.env.example`, `README.md`, `CLAUDE.md`, `docs/netlify.md` (new); removed `scripts/gcp/`, `.github/workflows/deploy-vm.yml`, `docs/compute_engine.md`, `docs/caddy_setup.md`.
+- decisions: Wrap the whole Express app in one Netlify Function via `serverless-http` (preserves routes/middleware/tests) rather than rewriting per-route. Key the database driver and security hardening on `NODE_ENV`/`TURSO_DATABASE_URL` so dev and the 66 existing tests run unchanged against a local file.
+- risks: In-memory rate limiter and forecast-area cache reset per cold start (acceptable). `vite` is copied into the function (dev-only branch never executes it).
+- verification: `npm test` (66 pass), `npm run build`, `npm run lint`; remote migration applied to Turso and verified (`locations` table + unique index); full create→list→refresh→delete cycle driven through the compiled function handler against Turso (201/200/200/204, self-cleaned); function bundle validated with esbuild (ESM, externals).
+- follow-up: Task 7 (create Netlify site + env vars + trigger deploy) and Task 8 (Cloudflare CNAME for `weather.assurecraft.org`) require the user's Netlify and Cloudflare accounts. See [docs/netlify.md](docs/netlify.md).
+
 ## 2026-06-05 | branch `main` | CI fix | GitHub Actions Node.js 20 deprecation
 
 - status: fixed

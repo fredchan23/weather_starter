@@ -1,9 +1,9 @@
-import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { and, desc, eq } from 'drizzle-orm';
-import { drizzle } from 'drizzle-orm/sqlite-proxy';
-import { migrate } from 'drizzle-orm/sqlite-proxy/migrator';
+import { createClient } from '@libsql/client';
+import { drizzle } from 'drizzle-orm/libsql';
+import { migrate } from 'drizzle-orm/libsql/migrator';
 import { locations, type WeatherSnapshot } from './schema.js';
 
 export const CONDITION_NOT_REFRESHED = 'Not refreshed';
@@ -39,23 +39,33 @@ const defaultWeather: WeatherSnapshot = {
   daily_forecast: [],
 };
 
-const databasePath =
-  process.env.DATABASE_PATH ?? join(process.cwd(), 'backend', 'weather.db');
-mkdirSync(dirname(databasePath), { recursive: true });
+// Use the remote Turso (libSQL) database when configured, except under test where
+// we always fall back to a local file so the suite stays isolated and offline.
+const isTest = process.env.NODE_ENV === 'test';
+const remoteUrl = process.env.TURSO_DATABASE_URL;
+const useRemote = Boolean(remoteUrl) && !isTest;
 
-const sqlite = new DatabaseSync(databasePath);
-sqlite.exec('PRAGMA journal_mode = WAL');
-const db = drizzle(sqliteCallback, { schema: { locations } });
-await migrate(
-  db,
-  async (migrationQueries) => {
-    for (const query of migrationQueries) {
-      const trimmed = query.trim();
-      if (trimmed) sqlite.exec(trimmed);
-    }
-  },
-  { migrationsFolder: join(process.cwd(), 'backend', 'drizzle') },
+const localPath =
+  process.env.DATABASE_PATH ?? join(process.cwd(), 'backend', 'weather.db');
+if (!useRemote) {
+  mkdirSync(dirname(localPath), { recursive: true });
+}
+
+const client = createClient(
+  useRemote
+    ? { url: remoteUrl as string, authToken: process.env.TURSO_AUTH_TOKEN }
+    : { url: `file:${localPath}` },
 );
+const db = drizzle(client, { schema: { locations } });
+
+// Auto-apply migrations only for the local file database (dev/tests). The remote
+// Turso database is migrated out-of-band via `npm run db:migrate:remote`, so a
+// cold-started serverless function never runs migrations on the request path.
+if (!useRemote) {
+  await migrate(db, {
+    migrationsFolder: join(process.cwd(), 'backend', 'drizzle'),
+  });
+}
 
 export async function listLocations(sessionId: string): Promise<LocationRecord[]> {
   return (
@@ -156,7 +166,7 @@ export async function updateWeather(
 
 export async function resetStore(): Promise<void> {
   await db.delete(locations).run();
-  sqlite.prepare("DELETE FROM sqlite_sequence WHERE name = 'locations'").run();
+  await client.execute("DELETE FROM sqlite_sequence WHERE name = 'locations'");
 }
 
 function weatherToColumns(weather: WeatherSnapshot) {
@@ -209,30 +219,4 @@ function rowToRecord(row: LocationRow): LocationRecord {
       daily_forecast: row.dailyForecast,
     },
   };
-}
-
-async function sqliteCallback(
-  sql: string,
-  params: unknown[],
-  method: 'run' | 'all' | 'values' | 'get',
-): Promise<{ rows: unknown[] }> {
-  const statement = sqlite.prepare(sql);
-  const bindings = params as never[];
-  if (method === 'run') {
-    statement.run(...bindings);
-    return { rows: [] };
-  }
-  if (method === 'get') {
-    const row = statement.get(...bindings) as
-      | Record<string, unknown>
-      | undefined;
-    return {
-      rows: row ? Object.values(row) : (undefined as unknown as unknown[]),
-    };
-  }
-  const rows = statement.all(...bindings) as Record<string, unknown>[];
-  if (method === 'values') {
-    return { rows: rows.map((row) => Object.values(row)) };
-  }
-  return { rows: rows.map((row) => Object.values(row)) };
 }

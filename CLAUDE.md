@@ -11,7 +11,8 @@ npm run test:watch   # Tests in watch mode
 npm run build        # Compile backend TS + build frontend (verify before committing)
 npm run lint         # ESLint for backend and frontend TS/TSX
 npm run db:generate  # Generate Drizzle migration after schema changes
-npm run db:migrate   # Apply migrations to backend/weather.db
+npm run db:migrate   # Apply migrations to the local SQLite database
+npm run db:migrate:remote  # Apply migrations to the remote Turso (libSQL) database
 npm run reset        # Delete backend/weather.db (start fresh)
 npm run doctor       # Smoke-test /health and /api/locations
 ```
@@ -20,7 +21,9 @@ Run `npm test` and `npm run build` to verify every change.
 
 ## Architecture
 
-Single Node process: Express handles `/api/*` and a `/health` route; Vite middleware serves the React SPA. The frontend uses relative `/api` requests — no port config needed. In production, Vite is replaced with `express.static` pointing at `frontend/dist`.
+In local dev this is a single Node process: Express handles `/api/*` and a `/health` route; Vite middleware serves the React SPA. The frontend uses relative `/api` requests — no port config needed.
+
+In production the app deploys to **Netlify**: the SPA is served from the CDN and the whole Express app runs as one Netlify Function (`netlify/functions/api.ts`, wrapped with `serverless-http`), backed by a **Turso (libSQL)** database. `db.ts` connects to Turso when `TURSO_DATABASE_URL` is set and `NODE_ENV !== 'test'`, falling back to a local SQLite file otherwise. See [docs/netlify.md](docs/netlify.md).
 
 **Snapshot pattern:** Weather data is fetched from `https://api-open.data.gov.sg` only on create or manual refresh — never on page load. A new reading is merged over the stored one so previously valid fields survive partial upstream responses. See [backend/src/routes/locations.ts](backend/src/routes/locations.ts).
 
@@ -29,7 +32,9 @@ Single Node process: Express handles `/api/*` and a `/health` route; Vite middle
 | File | Purpose |
 |---|---|
 | `backend/src/schema.ts` | `WeatherSnapshot` interface + Drizzle table — source of truth for data shape |
-| `backend/src/db.ts` | SQLite helpers (`createLocation`, `updateWeather`, `deleteLocation`, …) — all scoped to `sessionId` |
+| `backend/src/db.ts` | Drizzle/libSQL helpers (`createLocation`, `updateWeather`, `deleteLocation`, …) — all scoped to `sessionId`; uses Turso in prod, local file in dev/tests |
+| `netlify/functions/api.ts` | Netlify Function wrapping the Express app via `serverless-http` |
+| `netlify.toml` | Netlify build config + `/api/*` and `/health` redirects to the function |
 | `backend/src/server.ts` | Express app factory; `sessionMiddleware` reads/generates `wsid` cookie → `res.locals.sessionId` |
 | `backend/src/weather.ts` | `SingaporeWeatherClient` — fetches and composes data.gov.sg readings into `WeatherSnapshot` |
 | `backend/src/routes/locations.ts` | Express routes; accepts injectable `WeatherClient` for testing |
@@ -47,7 +52,7 @@ Tests are router-level (vitest). Pass a mock `weatherClient` via `createLocation
 Follow this order when adding or modifying a field:
 
 1. Edit `backend/src/schema.ts` — update the Drizzle table **and** the `WeatherSnapshot` interface.
-2. `npm run db:generate` then `npm run db:migrate`.
+2. `npm run db:generate` then `npm run db:migrate` (local). Run `npm run db:migrate:remote` to apply to Turso before/at deploy.
 3. Update `backend/src/weather.ts` to populate the new field(s).
 4. Update `frontend/src/types.ts` if the frontend consumes the field.
 
