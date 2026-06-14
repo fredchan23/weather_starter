@@ -14,7 +14,12 @@ import {
 } from './routes/locations.js';
 import { logger } from './logger.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// import.meta.url is empty when bundled to CommonJS (the Netlify Functions
+// bundler). __dirname is only used by the production static-serve branch, which
+// the function never runs (serveFrontend:false), so a cwd fallback is safe there.
+const __dirname = import.meta.url
+  ? dirname(fileURLToPath(import.meta.url))
+  : process.cwd();
 const pinoHttp = pinoHttpModule.default ?? pinoHttpModule;
 const FRONTEND_EVENT_PATTERN = /^[a-z][a-z0-9_.:-]{1,63}$/;
 
@@ -225,6 +230,9 @@ function sessionMiddleware(
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {
+  // Wrapped in an async IIFE (not top-level await) so the module bundles to
+  // CommonJS for the Netlify Functions bundler, which forbids top-level await.
+  void (async () => {
   const port = Number(process.env.PORT ?? 3000);
   const host = process.env.HOST ?? '127.0.0.1';
   const { server } = await createApp();
@@ -262,4 +270,5 @@ if (import.meta.url === pathToFileURL(process.argv[1]).href) {
       'Weather Starter listening',
     );
   });
+  })();
 }

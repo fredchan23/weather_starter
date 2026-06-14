@@ -58,16 +58,24 @@ const client = createClient(
 );
 const db = drizzle(client, { schema: { locations } });
 
-// Auto-apply migrations only for the local file database (dev/tests). The remote
+// Auto-apply migrations only for the local file database (dev/tests), lazily on
+// first access. Kept out of module top-level so the bundle has no top-level await
+// (the Netlify Functions bundler emits CommonJS, which forbids it). The remote
 // Turso database is migrated out-of-band via `npm run db:migrate:remote`, so a
 // cold-started serverless function never runs migrations on the request path.
-if (!useRemote) {
-  await migrate(db, {
-    migrationsFolder: join(process.cwd(), 'backend', 'drizzle'),
-  });
+let readyPromise: Promise<unknown> | null = null;
+function ensureReady(): Promise<unknown> {
+  if (useRemote) return Promise.resolve();
+  if (!readyPromise) {
+    readyPromise = migrate(db, {
+      migrationsFolder: join(process.cwd(), 'backend', 'drizzle'),
+    });
+  }
+  return readyPromise;
 }
 
 export async function listLocations(sessionId: string): Promise<LocationRecord[]> {
+  await ensureReady();
   return (
     await db
       .select()
@@ -83,6 +91,7 @@ export async function createLocation(
   latitude: number,
   longitude: number,
 ): Promise<LocationRecord> {
+  await ensureReady();
   const duplicate = await db
     .select({ id: locations.id })
     .from(locations)
@@ -122,6 +131,7 @@ export async function getLocation(
   id: number,
   sessionId: string,
 ): Promise<LocationRecord | null> {
+  await ensureReady();
   const row = await db
     .select()
     .from(locations)
@@ -134,6 +144,7 @@ export async function deleteLocation(
   id: number,
   sessionId: string,
 ): Promise<LocationRecord | null> {
+  await ensureReady();
   const row = await db
     .select()
     .from(locations)
@@ -153,6 +164,7 @@ export async function updateWeather(
   sessionId: string,
   weather: WeatherSnapshot,
 ): Promise<LocationRecord | null> {
+  await ensureReady();
   const columns = weatherToColumns(weather);
   const row = await db
     .update(locations)
@@ -165,6 +177,7 @@ export async function updateWeather(
 }
 
 export async function resetStore(): Promise<void> {
+  await ensureReady();
   await db.delete(locations).run();
   await client.execute("DELETE FROM sqlite_sequence WHERE name = 'locations'");
 }
