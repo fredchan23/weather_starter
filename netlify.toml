@@ -17,10 +17,25 @@
 
 [functions]
   node_bundler = "esbuild"
-  # - @libsql/client / libsql: native addon; ship the prebuilt binary unbundled.
-  # - vite: only referenced by server.ts's dev-only branch (serveFrontend:false in
-  #   the function, so it never runs); externalize to keep it out of the bundle.
-  external_node_modules = ["@libsql/client", "libsql", "vite"]
+  # Keep runtime dependencies OUT of the bundle. The function is ESM ("type":
+  # "module"), and inlining CommonJS deps (express, serverless-http, …) into ESM
+  # makes esbuild emit a require() shim that throws "Dynamic require of 'http' is
+  # not supported" at load. Left external, Node loads them normally. This also
+  # covers the native @libsql/client/libsql and the dev-only vite import.
+  external_node_modules = [
+    "@libsql/client",
+    "libsql",
+    "drizzle-orm",
+    "express",
+    "serverless-http",
+    "helmet",
+    "cors",
+    "express-rate-limit",
+    "pino",
+    "pino-http",
+    "dotenv",
+    "vite",
+  ]
 
 # API and health checks are handled by the Express app running as a function.
 # Netlify preserves the original request path in the function event, so Express
