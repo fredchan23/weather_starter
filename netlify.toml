@@ -10,6 +10,10 @@
   # NODE_ENV=production (set for the function runtime) would otherwise make npm
   # skip devDependencies, but the build needs them (typescript, vite, etc.).
   NPM_FLAGS = "--include=dev"
+  # NODE_ENV's value ("production") legitimately appears throughout the frontend
+  # build, so exclude just that key from secret scanning (real secrets like
+  # TURSO_AUTH_TOKEN are still scanned).
+  SECRETS_SCAN_OMIT_KEYS = "NODE_ENV"
 
 [functions]
   node_bundler = "esbuild"
