@@ -4,9 +4,9 @@ Use this as a changelog. Add one entry per branch or commit, and keep the same o
 
 Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 
-## 2026-06-14 | branch `main` | commit `d9c796c` (pre-commit) | migrate deployment target to Netlify + Turso
+## 2026-06-14 | branch `main` | commit `d9c796c`→`5b51dad`+ | migrate deployment target to Netlify + Turso
 
-- status: in progress
+- status: implemented (verified in production)
 - implementation request: Migrate both frontend and backend to deploy on Netlify, replacing the Google Compute Engine path. Add Turso (libSQL) as the hosted database and map the custom domain `https://weather.assurecraft.org` via Cloudflare.
 - implementation challenges:
   - Netlify has no persistent server or filesystem, so the local SQLite file (`node:sqlite` + WAL) had to move to a hosted database. Chose Turso/libSQL because the schema is already SQLite — only the Drizzle driver in `db.ts` changed, no SQL dialect port.
@@ -17,7 +17,8 @@ Related research: [Weather Dashboard API Mapping](./dashboard_api_mapping.md)
 - decisions: Wrap the whole Express app in one Netlify Function via `serverless-http` (preserves routes/middleware/tests) rather than rewriting per-route. Key the database driver and security hardening on `NODE_ENV`/`TURSO_DATABASE_URL` so dev and the 66 existing tests run unchanged against a local file.
 - risks: In-memory rate limiter and forecast-area cache reset per cold start (acceptable). `vite` is copied into the function (dev-only branch never executes it).
 - verification: `npm test` (66 pass), `npm run build`, `npm run lint`; remote migration applied to Turso and verified (`locations` table + unique index); full create→list→refresh→delete cycle driven through the compiled function handler against Turso (201/200/200/204, self-cleaned); function bundle validated with esbuild (ESM, externals).
-- follow-up: Task 7 (create Netlify site + env vars + trigger deploy) and Task 8 (Cloudflare CNAME for `weather.assurecraft.org`) require the user's Netlify and Cloudflare accounts. See [docs/netlify.md](docs/netlify.md).
+- post-deploy fixes: the live deploy surfaced a chain of serverless-specific failures fixed in follow-up commits — husky/devDeps install (`husky || true` + `NPM_FLAGS=--include=dev`), `NODE_ENV` secret-scan false positive (`SECRETS_SCAN_OMIT_KEYS`), CJS-into-ESM `Dynamic require` (externalized deps), top-level await vs ZISI's CJS output (lazy migration + async IIFE + `import.meta.url` guard), and read-only-FS `mkdir` in `logger.ts` (stdout-only on Lambda). Root-caused by running Netlify's real bundler (ZISI) locally and executing its output under a simulated Lambda env.
+- follow-up: Custom domain `weather.assurecraft.org` (Cloudflare CNAME) still to be attached — see [docs/netlify.md](docs/netlify.md). Full learning write-up of the migration and serverless concepts in [docs/decisions/ADR-004-netlify-turso-migration.md](docs/decisions/ADR-004-netlify-turso-migration.md).
 
 ## 2026-06-05 | branch `main` | CI fix | GitHub Actions Node.js 20 deprecation
 
